@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/bin/
+server/obj/
+
+# Environment files
+.env
+.env.local
+client/.env
+server/appsettings.Development.json
+
+# Build outputs
+client/build/
+client/dist/
+server/bin/
+server/obj/
+
+# IDE files
+.vs/
+.vscode/
+*.suo
+*.user
+
+# Misc
+.DS_Store
