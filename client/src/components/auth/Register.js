@@ -12,8 +12,8 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Simple validation
-    if ( !username || !email || !password || !confirmPassword) {
+    // Frontend validation
+    if (!username || !email || !password || !confirmPassword) {
       setError("Please fill out all fields.");
       return;
     }
@@ -23,15 +23,14 @@ const Register = () => {
       return;
     }
 
-    // Example API call to register (you can replace this with your actual registration logic)
     const registerData = {
       username,
       email,
       password,
+      confirmPassword,
     };
 
     try {
-      // Replace with actual registration logic, e.g., API call to your backend
       const response = await fetch("https://localhost:7262/api/auth/register", {
         method: "POST",
         headers: {
@@ -41,13 +40,16 @@ const Register = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Registration failed");
+        // Extract and display backend error
+        const errorData = await response.json();
+        setError(errorData.message || "Registration failed.");
+        return;
       }
 
       // On successful registration, redirect to the login page
       navigate("/login");
     } catch (error) {
-      setError(error.message);
+      setError("An error occurred. Please try again.");
     }
   };
 
@@ -56,13 +58,13 @@ const Register = () => {
       <h2>Register</h2>
       <form onSubmit={handleSubmit}>
         <div>
-            <input 
-                type="username"
-                placeholder="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-            />
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
         </div>
         <div>
           <input

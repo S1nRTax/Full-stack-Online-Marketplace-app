@@ -1,20 +1,24 @@
-# Dependencies
+# Node.js & client-side dependencies
 node_modules/
 client/node_modules/
+
+# .NET Build outputs
 server/bin/
 server/obj/
 
-# Environment files
+# Environment files (don't commit secrets)
 .env
 .env.local
 client/.env
 server/appsettings.Development.json
 
-# Build outputs
+# Sensitive configuration files
+server/secrets.json  # If you're using a separate secrets file for sensitive data
+server/appsettings.json  # If this file contains sensitive data
+
+# Build outputs for client-side
 client/build/
 client/dist/
-server/bin/
-server/obj/
 
 # IDE files
 .vs/
@@ -22,5 +26,6 @@ server/obj/
 *.suo
 *.user
 
-# Misc
+# Miscellaneous system files
 .DS_Store
+Thumbs.db
