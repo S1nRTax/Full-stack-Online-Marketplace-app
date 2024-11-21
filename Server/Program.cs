@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Server.Data;
+using Server.Models;
 using System.Text;
 
 namespace Server
@@ -14,6 +15,11 @@ namespace Server
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            // Configure Identity with your custom User class
+            builder.Services.AddIdentity<User, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
             builder.Services.AddControllers();
 
             // Configure the database connection
@@ -22,22 +28,6 @@ namespace Server
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
-
-            // Configure Identity
-            builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => 
-            {
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireUppercase = true;
-                options.Password.RequiredLength = 6;
-
-                // Add SignIn options
-                options.SignIn.RequireConfirmedAccount = false;
-                options.SignIn.RequireConfirmedEmail = false;
-            })
-            .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddDefaultTokenProviders(); // Add this line
 
             // Configure JWT Authentication
             builder.Services.AddAuthentication(options =>
@@ -70,7 +60,7 @@ namespace Server
                         .WithOrigins("http://localhost:3000")
                         .AllowAnyHeader()
                         .AllowAnyMethod()
-                        .AllowCredentials()); // Add this if you're using credentials
+                        .AllowCredentials());
             });
 
             var app = builder.Build();
@@ -97,9 +87,6 @@ namespace Server
             // Authentication & Authorization
             app.UseAuthentication();
             app.UseAuthorization();
-
-            // Remove this line as we're not using the default Identity endpoints
-            // app.MapIdentityApi<IdentityUser>();
 
             app.MapControllers();
 
