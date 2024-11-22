@@ -6,19 +6,25 @@ using Server.Data;
 using Server.Models;
 using System.Text;
 
+
 namespace Server
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+
             // Configure Identity with your custom User class
             builder.Services.AddIdentity<User, IdentityRole>()
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
+
+           
+
 
             builder.Services.AddControllers();
 
@@ -64,6 +70,17 @@ namespace Server
             });
 
             var app = builder.Build();
+
+           
+
+            // Seed roles
+            using (var scope = app.Services.CreateScope())
+            {
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+                await RoleSeeder.SeedRoles(roleManager);
+            }
+
+          
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

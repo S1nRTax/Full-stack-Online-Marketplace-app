@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Models;
 using System.Diagnostics;
@@ -16,6 +17,14 @@ namespace Server.Controllers
         public IActionResult Index()
         {
             return View();
+        }
+
+        [Authorize(Roles = "Vendor")]
+        [HttpGet("vendor-dashboard")]
+        public IActionResult VendorDashboard()
+        {
+            // Only vendors can access this
+            return Ok(new { Message = "Vendor dashboard data" });
         }
 
         public IActionResult Privacy()
