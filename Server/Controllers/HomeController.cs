@@ -19,14 +19,6 @@ namespace Server.Controllers
             return View();
         }
 
-        [Authorize(Roles = "Vendor")]
-        [HttpGet("vendor-dashboard")]
-        public IActionResult VendorDashboard()
-        {
-            // Only vendors can access this
-            return Ok(new { Message = "Vendor dashboard data" });
-        }
-
         public IActionResult Privacy()
         {
             return View();
