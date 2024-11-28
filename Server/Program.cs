@@ -63,7 +63,7 @@ namespace Server
             {
                 options.AddPolicy("AllowReactApp",
                     builder => builder
-                        .WithOrigins("http://localhost:3000")
+                        .WithOrigins("http://localhost:5173")
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials());
@@ -101,11 +101,13 @@ namespace Server
 
             app.UseRouting();
 
+            app.MapControllers();
+
             // Authentication & Authorization
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.MapControllers();
+            
 
             app.Run();
         }
