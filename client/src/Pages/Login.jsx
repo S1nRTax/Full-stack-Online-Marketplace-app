@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom';
+import { data, Navigate, useNavigate } from 'react-router-dom';
+
 
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -23,6 +24,10 @@ const Login = () => {
             if(result.ok){
                 // well store the user token and user info here in the future
                 setIsLoggedin(true);
+                const data = await result.json();
+                const {token , message  , userId , email ,  username} = data;
+                
+                
             }else{
                 const errorData = await result.json();
                 setErrorMessage({
@@ -44,13 +49,17 @@ const Login = () => {
 
   return (
     <div>
-        <p>Login page : </p>
-        <label> Email</label>
-        <input type="text" placeholder='email' onChange={(e)=>setEmail(e.target.value)} />
-        <label>Password</label>
-        <input type="password" placeholder='password' onChange={(e) => setPassword(e.target.value)} />
-        <input type="submit" onClick={handleLoginSubmit} />
-
+        <div>
+            <h2>Login</h2>
+        </div>
+        <div>
+            <label>Email:</label>
+            <input type="text" placeholder='email' onChange={(e)=>setEmail(e.target.value)} />
+            <label>Password:</label>
+            <input type="password" placeholder='password' onChange={(e) => setPassword(e.target.value)} />
+            <input type="submit" onClick={handleLoginSubmit} />
+        </div>
+        
         {/* Diplaying the errors :  */}
         {errorMessage && ( 
         <div style={{ color: 'red', marginTop: '10px' }}>

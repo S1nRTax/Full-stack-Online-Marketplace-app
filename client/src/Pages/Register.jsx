@@ -53,21 +53,26 @@ const Register = () => {
 
     return (
         <div>
-            <div className="container">
-                <label>Name</label>
-                <input type="text" placeholder="name" onChange={(e) => setName(e.target.value)} /> <br />
-                <label>Username</label>
-                <input type="text" placeholder="username" onChange={(e) => setUsername(e.target.value)} /><br />
-                <label>Email</label>
-                <input type="text" placeholder="email" onChange={(e) => setEmail(e.target.value)} /><br />
-                <label>Password</label>
-                <input type="password" placeholder="password" onChange={(e) => setPassword(e.target.value)} /><br />
-                <input type="submit" onClick={handleRegisterSubmit} />
+            <div>
+                    <div>
+                        <h2>Register</h2>
+                    </div>
+                    <div>
+                        <label>Name:</label>
+                        <input type="text" placeholder="name" onChange={(e) => setName(e.target.value)} /> <br />
+                        <label>Username:</label>
+                        <input type="text" placeholder="username" onChange={(e) => setUsername(e.target.value)} /><br />
+                        <label>Email:</label>
+                        <input type="text" placeholder="email" onChange={(e) => setEmail(e.target.value)} /><br />
+                        <label>Password:</label>
+                        <input type="password" placeholder="password" onChange={(e) => setPassword(e.target.value)} /><br />
+                        <input type="submit" onClick={handleRegisterSubmit} />
+                    </div>
+                
 
                 {/* Display error messages */}
                 {errorMessage && (
                     <div style={{ color: 'red', marginTop: '10px' }}>
-                        <p>{errorMessage.message}</p>
                         {errorMessage.errors.length > 0 && (
                             <ul>
                                 {errorMessage.errors.map((error, index) => (
