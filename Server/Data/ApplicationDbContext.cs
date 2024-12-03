@@ -17,21 +17,21 @@ namespace Server.Data
         {
         }
 
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // for vendor :
-            builder.Entity<Vendor>()
-            .HasOne(v => v.User)
-            .WithOne()
-            .HasForeignKey<Vendor>(v => v.UserId);
+            base.OnModelCreating(modelBuilder);
 
-            // for customer
-            builder.Entity<Customer>()
-            .HasOne(c => c.User)
-            .WithOne()
-            .HasForeignKey<Customer>(c => c.UserId);
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Customer)
+                .WithOne(c => c.User)
+                .HasForeignKey<Customer>(c => c.Id)
+                .IsRequired(false);
 
-            base.OnModelCreating(builder);
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Vendor)
+                .WithOne(v => v.User)
+                .HasForeignKey<Vendor>(v => v.Id)
+                .IsRequired(false);
         }
     }
 }

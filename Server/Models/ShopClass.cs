@@ -1,6 +1,7 @@
 ﻿
 
 using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Manage.Internal;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Server.Models
 {
@@ -14,7 +15,8 @@ namespace Server.Models
         public int Popularity { get; set; } // Metric for popularity (e.g., number of sales)
 
         // Foreign key to link with User
-        public string UserId { get; set; }
+        [ForeignKey("User")]
+        public string? Id { get; set; }
         public User User { get; set; } // Navigation property
     }
 

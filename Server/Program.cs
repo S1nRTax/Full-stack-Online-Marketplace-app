@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Server.Data;
 using Server.Models;
+using Server.Services;
 using System.Text;
 
 
@@ -23,8 +24,7 @@ namespace Server
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
-           
-
+            builder.Services.AddScoped<IUserTransitionService, UserTransitionService>();
 
             builder.Services.AddControllers();
 

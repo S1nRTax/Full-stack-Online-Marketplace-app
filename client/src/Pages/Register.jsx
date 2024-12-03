@@ -68,7 +68,7 @@ const Register = () => {
                         Sign up
                     </h2>
                 </div>
-                <form className="space-y-6" onSubmit={handleRegisterSubmit}> 
+                <form className="space-y-7" onSubmit={handleRegisterSubmit}> 
                     <div className="rounded-md shadow-sm -space-y-px">
                         {/* Full Name Input */}
                         <div className="">

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Server.Data;
 using Server.Models;
-using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -83,7 +82,7 @@ namespace Server.Controllers
                         ShopAddress = model.ShopAddress!,
                         ShopLogo = model.ShopLogo,
                         Popularity = 0,
-                        UserId = user.Id
+                        Id = user.Id
                     };
                     await _context.Vendors.AddAsync(vendor);
                 }
@@ -93,7 +92,7 @@ namespace Server.Controllers
                     {
                         Username = model.Username!,
                         ProfilePicture = model.ProfilePicture,
-                        UserId = user.Id
+                        Id = user.Id
                     };
                     await _context.Customers.AddAsync(customer);
                 }

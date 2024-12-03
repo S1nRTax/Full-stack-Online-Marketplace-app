@@ -1,44 +1,34 @@
 ﻿using System.ComponentModel.DataAnnotations;
+
 namespace Server.Models
 {
     public class RegisterDto
     {
-        // Common fields for all users
         [Required(ErrorMessage = "Name is required.")]
-        [StringLength(50, ErrorMessage = "Name must be between 2 and 50 characters.", MinimumLength = 2)]
-        public string Name { get; set; }
+        [StringLength(50, MinimumLength = 2, ErrorMessage = "Name must be between 2 and 50 characters.")]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Username is required.")]
+        [StringLength(30, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 30 characters.")]
+        [RegularExpression(@"^[a-zA-Z0-9_]+$", ErrorMessage = "Username can only contain letters, numbers, and underscores.")]
+        public string Username { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress(ErrorMessage = "Invalid email format.")]
-        public string Email { get; set; }
+        [StringLength(256, ErrorMessage = "Email cannot exceed 256 characters.")]
+        public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Password is required.")]
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters long.")]
-        public string Password { get; set; }
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be between 6 and 100 characters.")]
+        [DataType(DataType.Password)]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$",
+            ErrorMessage = "Password must contain at least one uppercase letter, one lowercase letter, and one number.")]
+        public string Password { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "User type is required.")]
-        [RegularExpression("Vendor|Customer", ErrorMessage = "UserType must be either 'Vendor' or 'Customer'.")]
-        public string UserType { get; set; } // "Vendor" or "Customer"
-
-        // Vendor-specific fields
-        [RequiredIf("UserType", "Vendor", ErrorMessage = "ShopId is required for vendors.")]
-        public string? ShopId { get; set; }
-
-        [RequiredIf("UserType", "Vendor", ErrorMessage = "ShopName is required for vendors.")]
-        [StringLength(100, ErrorMessage = "ShopName must be between 2 and 100 characters.", MinimumLength = 2)]
-        public string? ShopName { get; set; }
-
-        [RequiredIf("UserType", "Vendor", ErrorMessage = "ShopAddress is required for vendors.")]
-        [StringLength(200, ErrorMessage = "ShopAddress must be between 5 and 200 characters.", MinimumLength = 5)]
-        public string? ShopAddress { get; set; }
-
-        public string? ShopLogo { get; set; } // Optional for vendors
-
-        // Customer-specific fields
-        [RequiredIf("UserType", "Customer", ErrorMessage = "Username is required for customers.")]
-        [StringLength(30, ErrorMessage = "Username must be between 3 and 30 characters.", MinimumLength = 3)]
-        public string? Username { get; set; }
-
-        public string? ProfilePicture { get; set; } // Optional for customers
+        [Required(ErrorMessage = "Confirm Password is required.")]
+        [DataType(DataType.Password)]
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+        [Display(Name = "Confirm Password")]
+        public string ConfirmPassword { get; set; } = string.Empty;
     }
 }
