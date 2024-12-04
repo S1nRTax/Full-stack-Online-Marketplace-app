@@ -7,6 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Server.Enums;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Server.Controllers
 {
@@ -41,9 +42,25 @@ namespace Server.Controllers
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
+
             try
             {
-                // Create the user
+                // this checks if the username is already taken
+                var existingUserByUsername = await _userManager.FindByNameAsync(model.Username);
+                if (existingUserByUsername != null)
+                {
+                    ModelState.AddModelError("Username", "Username is already taken.");
+                    return BadRequest(ModelState);
+                }
+                // this checks if the Email is already taken
+                var existingUserByEmail = await _userManager.FindByNameAsync(model.Email);
+                if (existingUserByEmail != null)
+                {
+                    ModelState.AddModelError("Email", "Email is already taken.");
+                    return BadRequest(ModelState);
+                }
+
+                // Then we create the user
                 var user = new User
                 {
                     UserName = model.Username ?? model.Email,
@@ -53,8 +70,9 @@ namespace Server.Controllers
                     CreatedAt = DateTime.UtcNow,
                     IsActive = false
                 };
-
+                // hashing password
                 var result = await _userManager.CreateAsync(user, model.Password);
+
                 if (!result.Succeeded)
                 {
                     return BadRequest(new
@@ -64,46 +82,20 @@ namespace Server.Controllers
                     });
                 }
 
-                // Validate and assign role
-                if (!Enum.TryParse<UserRoles>(model.UserType, true, out UserRoles parsedRole))
+
+                foreach (var error in result.Errors)
                 {
-                    return BadRequest(new { Message = $"Invalid role specified. Valid roles are: {string.Join(", ", Enum.GetNames<UserRoles>())}" });
+                    ModelState.AddModelError(string.Empty, error.Description);
                 }
 
-                await _userManager.AddToRoleAsync(user, parsedRole.ToString());
-
-                // Create related data
-                if (parsedRole == UserRoles.vendor)
-                {
-                    var vendor = new Vendor
-                    {
-                        ShopId = model.ShopId!,
-                        ShopName = model.ShopName!,
-                        ShopAddress = model.ShopAddress!,
-                        ShopLogo = model.ShopLogo,
-                        Popularity = 0,
-                        Id = user.Id
-                    };
-                    await _context.Vendors.AddAsync(vendor);
-                }
-                else if (parsedRole == UserRoles.customer)
-                {
-                    var customer = new Customer
-                    {
-                        Username = model.Username!,
-                        ProfilePicture = model.ProfilePicture,
-                        Id = user.Id
-                    };
-                    await _context.Customers.AddAsync(customer);
-                }
-
+                // save and commit the changes:
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return Ok(new
                 {
                     Message = "Registration successful",
-                    User = new { user.Id, user.Name, user.Email, Role = parsedRole.ToString() }
+                    User = new { user.Id, user.UserName , user.Name, user.Email}
                 });
             }
             catch (Exception ex)
@@ -130,11 +122,7 @@ namespace Server.Controllers
 
                 if (result.Succeeded)
                 {
-
-                    // getting user role : 
-                    var roles = await _userManager.GetRolesAsync(user);
-
-
+                        
                     // Create claims for the 
                     var claims = new List<Claim>
                     {
@@ -142,13 +130,6 @@ namespace Server.Controllers
                         new Claim(ClaimTypes.Email, user.Email!),
                         new Claim(ClaimTypes.Name, user.UserName!)
                     };
-
-                    // Add role claims
-                    foreach (var role in roles)
-                    {
-                        claims.Add(new Claim(ClaimTypes.Role, role));
-                    }
-
 
                     var tokenHandler = new JwtSecurityTokenHandler();
                     var key = Encoding.UTF8.GetBytes(_configuration["AppSettings:JWTSecret"] ?? throw new InvalidOperationException("JWT Secret not configured"));

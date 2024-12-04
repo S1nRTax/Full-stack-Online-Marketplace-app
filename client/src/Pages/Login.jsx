@@ -8,7 +8,8 @@ const Login = () => {
     const [isLoggedin , setIsLoggedin] = useState(false);
     const [errorMessage , setErrorMessage] = useState(null);
 
-    async function handleLoginSubmit(){
+    async function handleLoginSubmit(event){
+        event.preventDefault();
         try {
         const item = {email , password}
         const result =  await fetch('https://localhost:7262/api/auth/login' , 

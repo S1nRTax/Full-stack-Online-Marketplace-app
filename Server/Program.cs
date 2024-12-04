@@ -7,7 +7,6 @@ using Server.Models;
 using Server.Services;
 using System.Text;
 
-
 namespace Server
 {
     public class Program
@@ -16,16 +15,15 @@ namespace Server
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-
             // Configure Identity with your custom User class
-            builder.Services.AddIdentity<User, IdentityRole>()
-                .AddRoles<IdentityRole>()
-                .AddEntityFrameworkStores<ApplicationDbContext>()
-                .AddDefaultTokenProviders();
+            builder.Services.AddIdentity<User, IdentityRole>(options =>
+            {
+                options.User.RequireUniqueEmail = true; // Enforces unique.
+            })
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
 
             builder.Services.AddScoped<IUserTransitionService, UserTransitionService>();
-
             builder.Services.AddControllers();
 
             // Configure the database connection
@@ -71,16 +69,12 @@ namespace Server
 
             var app = builder.Build();
 
-           
-
             // Seed roles
             using (var scope = app.Services.CreateScope())
             {
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
                 await RoleSeeder.SeedRoles(roleManager);
             }
-
-          
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -101,13 +95,11 @@ namespace Server
 
             app.UseRouting();
 
-            app.MapControllers();
-
-            // Authentication & Authorization
+            // Authentication & Authorization middleware
             app.UseAuthentication();
             app.UseAuthorization();
 
-            
+            app.MapControllers();
 
             app.Run();
         }

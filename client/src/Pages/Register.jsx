@@ -9,7 +9,7 @@ const Register = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [errorMessage, setErrorMessage] = useState(null); 
     const [isRegistered, setIsRegistered] = useState(false);
-    const userType = "Customer";
+    
 
     async function handleRegisterSubmit(e) {
         e.preventDefault();
@@ -23,7 +23,7 @@ const Register = () => {
         }
 
         try {
-            const item = { name, username, email, password, userType };
+            const item = { name, username, email, password , confirmPassword};
             const result = await fetch('https://localhost:7262/api/auth/register', {
                 method: 'POST',
                 headers: {
