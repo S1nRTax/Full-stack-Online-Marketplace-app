@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Text;
 using Server.Enums;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Server.Controllers
 {
@@ -147,6 +148,19 @@ namespace Server.Controllers
                     var token = tokenHandler.CreateToken(tokenDescriptor);
                     var tokenString = tokenHandler.WriteToken(token);
 
+                    // Set the token as an HttpOnly cookie
+                    var cookieOptions = new CookieOptions
+                    {
+                        HttpOnly = true, // Prevent access via JavaScript
+                        Secure = true, // Use HTTPS in production
+                        SameSite = SameSiteMode.None, // Allow cross-site requests
+                        Expires = DateTime.UtcNow.AddDays(7) // Match JWT expiration
+                    };
+
+                    HttpContext.Response.Cookies.Append("access_token", tokenString, cookieOptions);
+                    
+
+
                     return Ok(new { Token = tokenString, Message = "Login successful", UserId = user.Id, Email = user.Email, Username = user.UserName });
                 }
 
@@ -161,5 +175,50 @@ namespace Server.Controllers
                 return StatusCode(500, new { Message = "An error occurred during login", Error = ex.Message });
             }
         }
+
+
+        [Authorize] // Ensures the token is validated
+        [HttpGet("validate")]
+        public async Task<IActionResult> ValidateToken()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID not found in token.");
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            return Ok(new
+            { 
+                id = user.Id,
+                username = user.UserName,
+                email = user.Email
+            });
+        }
+
+
+
+
+        [HttpPost("logout")]
+        [Authorize] // Ensure that only authenticated users can log out
+        public IActionResult Logout()
+        {
+            // Delete the access token cookie
+            Response.Cookies.Delete("access_token");
+
+            // Sign out from ASP.NET Identity
+            _signInManager.SignOutAsync();
+
+            return Ok(new { Message = "Logged out successfully!" });
+        }
+
+
     }
 }
