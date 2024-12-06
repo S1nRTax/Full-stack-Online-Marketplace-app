@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
-using System.Reflection.Emit;
 
 namespace Server.Data
 {
@@ -11,6 +10,7 @@ namespace Server.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -21,17 +21,31 @@ namespace Server.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // 1-to-1 Relationship between User and Customer
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Customer)
                 .WithOne(c => c.User)
                 .HasForeignKey<Customer>(c => c.Id)
                 .IsRequired(false);
 
+            // 1-to-1 Relationship between User and Vendor
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Vendor)
                 .WithOne(v => v.User)
                 .HasForeignKey<Vendor>(v => v.Id)
                 .IsRequired(false);
+
+            // Define unique constraint for RefreshToken's token
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(r => r.Token)  // Index on token for faster lookups
+                .IsUnique();
+
+            // 1-to-1 Relationship between User and RefreshToken
+            modelBuilder.Entity<RefreshToken>()
+                .HasOne(rt => rt.User)          
+                .WithOne(u => u.RefreshToken)   
+                .HasForeignKey<RefreshToken>(rt => rt.UserId)  
+                .OnDelete(DeleteBehavior.Cascade);  
         }
     }
 }

@@ -16,6 +16,15 @@ namespace Server
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Configure logging services
+            builder.Services.AddLogging(logging =>
+            {
+                logging.ClearProviders();  // Clear default providers
+                logging.AddConsole();      // Add Console provider
+                logging.AddDebug();        // Add Debug provider
+                // You can add more logging providers if needed
+            });
+
             // Configure Identity with your custom User class
             builder.Services.AddIdentity<User, IdentityRole>(options =>
             {
@@ -24,7 +33,10 @@ namespace Server
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
+
+            // Custom services with logging support
             builder.Services.AddScoped<IUserTransitionService, UserTransitionService>();
+            builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddControllers();
 
             // Configure the database connection
@@ -40,6 +52,10 @@ namespace Server
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
+            .AddCookie(x =>
+            {
+                x.Cookie.Name = "token";
+            })
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
@@ -53,7 +69,6 @@ namespace Server
                     ),
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero // Prevent token expiry delays
-                    
                 };
 
                 // Enable reading tokens from cookies
@@ -68,7 +83,6 @@ namespace Server
                         return Task.CompletedTask;
                     }
                 };
-
             });
 
             // Add CORS policy
@@ -84,13 +98,6 @@ namespace Server
             });
 
             var app = builder.Build();
-
-            // Seed roles
-            using (var scope = app.Services.CreateScope())
-            {
-                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-                await RoleSeeder.SeedRoles(roleManager);
-            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

@@ -12,8 +12,8 @@ using Server.Data;
 namespace Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241121040014_UpdateUserModel")]
-    partial class UpdateUserModel
+    [Migration("20241206000644_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -160,30 +160,48 @@ namespace Server.Migrations
 
             modelBuilder.Entity("Server.Models.Customer", b =>
                 {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<int>("CustomerId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CustomerId"));
-
                     b.Property<string>("ProfilePicture")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("CustomerId");
+                    b.HasKey("Id");
+
+                    b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("Server.Models.RefreshToken", b =>
+                {
+                    b.Property<string>("Token")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Token");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
 
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Customers");
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("Server.Models.User", b =>
@@ -202,16 +220,11 @@ namespace Server.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<string>("HashedPassword")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -224,8 +237,7 @@ namespace Server.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -269,11 +281,8 @@ namespace Server.Migrations
 
             modelBuilder.Entity("Server.Models.Vendor", b =>
                 {
-                    b.Property<int>("VendorId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VendorId"));
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("Popularity")
                         .HasColumnType("int");
@@ -287,21 +296,16 @@ namespace Server.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ShopLogo")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ShopName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("VendorId")
+                        .HasColumnType("int");
 
-                    b.HasKey("VendorId");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasKey("Id");
 
                     b.ToTable("Vendors");
                 });
@@ -360,8 +364,17 @@ namespace Server.Migrations
             modelBuilder.Entity("Server.Models.Customer", b =>
                 {
                     b.HasOne("Server.Models.User", "User")
-                        .WithOne()
-                        .HasForeignKey("Server.Models.Customer", "UserId")
+                        .WithOne("Customer")
+                        .HasForeignKey("Server.Models.Customer", "Id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Server.Models.RefreshToken", b =>
+                {
+                    b.HasOne("Server.Models.User", "User")
+                        .WithOne("RefreshToken")
+                        .HasForeignKey("Server.Models.RefreshToken", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -371,12 +384,22 @@ namespace Server.Migrations
             modelBuilder.Entity("Server.Models.Vendor", b =>
                 {
                     b.HasOne("Server.Models.User", "User")
-                        .WithOne()
-                        .HasForeignKey("Server.Models.Vendor", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithOne("Vendor")
+                        .HasForeignKey("Server.Models.Vendor", "Id");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Server.Models.User", b =>
+                {
+                    b.Navigation("Customer")
+                        .IsRequired();
+
+                    b.Navigation("RefreshToken")
+                        .IsRequired();
+
+                    b.Navigation("Vendor")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

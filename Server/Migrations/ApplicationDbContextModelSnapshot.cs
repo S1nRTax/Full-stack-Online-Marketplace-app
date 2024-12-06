@@ -175,6 +175,32 @@ namespace Server.Migrations
                     b.ToTable("Customers");
                 });
 
+            modelBuilder.Entity("Server.Models.RefreshToken", b =>
+                {
+                    b.Property<string>("Token")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Token");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("Server.Models.User", b =>
                 {
                     b.Property<string>("Id")
@@ -189,10 +215,6 @@ namespace Server.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("CustomerId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -241,13 +263,7 @@ namespace Server.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<string>("VendorId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -256,8 +272,6 @@ namespace Server.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.HasIndex("VendorId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -347,42 +361,42 @@ namespace Server.Migrations
             modelBuilder.Entity("Server.Models.Customer", b =>
                 {
                     b.HasOne("Server.Models.User", "User")
-                        .WithOne()
-                        .HasForeignKey("Server.Models.Customer", "Id")
+                        .WithOne("Customer")
+                        .HasForeignKey("Server.Models.Customer", "Id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Server.Models.RefreshToken", b =>
+                {
+                    b.HasOne("Server.Models.User", "User")
+                        .WithOne("RefreshToken")
+                        .HasForeignKey("Server.Models.RefreshToken", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Server.Models.Vendor", b =>
+                {
+                    b.HasOne("Server.Models.User", "User")
+                        .WithOne("Vendor")
+                        .HasForeignKey("Server.Models.Vendor", "Id");
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("Server.Models.User", b =>
                 {
-                    b.HasOne("Server.Models.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.Navigation("Customer")
                         .IsRequired();
 
-                    b.HasOne("Server.Models.Vendor", "Vendor")
-                        .WithMany()
-                        .HasForeignKey("VendorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.Navigation("RefreshToken")
                         .IsRequired();
 
-                    b.Navigation("Customer");
-
-                    b.Navigation("Vendor");
-                });
-
-            modelBuilder.Entity("Server.Models.Vendor", b =>
-                {
-                    b.HasOne("Server.Models.User", "User")
-                        .WithOne()
-                        .HasForeignKey("Server.Models.Vendor", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.Navigation("Vendor")
                         .IsRequired();
-
-                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

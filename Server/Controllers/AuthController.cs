@@ -5,10 +5,10 @@ using Server.Data;
 using Server.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
-using Server.Enums;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
+using Server.Services;
 
 namespace Server.Controllers
 {
@@ -20,17 +20,24 @@ namespace Server.Controllers
         private readonly SignInManager<User> _signInManager;
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _context;
+        private readonly ITokenService _tokenService;
+        private readonly ILogger _logger;
 
         public AuthController(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             IConfiguration configuration,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            ITokenService tokenService,
+            ILogger<AuthController> logger)
+            
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
             _context = context;
+            _tokenService = tokenService;
+            _logger = logger;
         }
 
 
@@ -112,69 +119,128 @@ namespace Server.Controllers
         {
             try
             {
-                if (!ModelState.IsValid) return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
 
+                // Find user by email
                 var user = await _userManager.FindByEmailAsync(model.Email);
-
                 if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
-                    return BadRequest(new { Message = "Invalid email or password." });
+                    return Unauthorized(new { Message = "Invalid email or password." });
 
-                var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, false);
-
-                if (result.Succeeded)
+                // Generate access token and set as cookie
+                var accessToken = _tokenService.GenerateAccessToken(user);
+                var cookieOptions = new CookieOptions
                 {
-                        
-                    // Create claims for the 
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.NameIdentifier, user.Id),
-                        new Claim(ClaimTypes.Email, user.Email!),
-                        new Claim(ClaimTypes.Name, user.UserName!)
-                    };
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None, // Ensure CSRF protection elsewhere
+                    Expires = DateTime.UtcNow.AddMinutes(1)
+                };
+                HttpContext.Response.Cookies.Append("access_token", accessToken, cookieOptions);
 
-                    var tokenHandler = new JwtSecurityTokenHandler();
-                    var key = Encoding.UTF8.GetBytes(_configuration["AppSettings:JWTSecret"] ?? throw new InvalidOperationException("JWT Secret not configured"));
+                // Generate and save refresh token
+                var refreshToken = new RefreshToken
+                {
+                    Token = _tokenService.GenerateRefreshToken(),
+                    ExpiresAt = DateTime.UtcNow.AddDays(7),
+                    CreateAt = DateTime.UtcNow
+                };
 
-                    var tokenDescriptor = new SecurityTokenDescriptor
-                    {
-                        Subject = new ClaimsIdentity(claims),
-                        Expires = DateTime.UtcNow.AddDays(7),
-                        SigningCredentials = new SigningCredentials(
-                            new SymmetricSecurityKey(key),
-                            SecurityAlgorithms.HmacSha256Signature)
-                    };
+                _tokenService.SetRefreshToken(refreshToken, user);
+                await _tokenService.SaveRefreshTokenAsync(user , refreshToken);
 
-
-                    var token = tokenHandler.CreateToken(tokenDescriptor);
-                    var tokenString = tokenHandler.WriteToken(token);
-
-                    // Set the token as an HttpOnly cookie
-                    var cookieOptions = new CookieOptions
-                    {
-                        HttpOnly = true, // Prevent access via JavaScript
-                        Secure = true, // Use HTTPS in production
-                        SameSite = SameSiteMode.None, // Allow cross-site requests
-                        Expires = DateTime.UtcNow.AddDays(7) // Match JWT expiration
-                    };
-
-                    HttpContext.Response.Cookies.Append("access_token", tokenString, cookieOptions);
-                    
+                await _context.SaveChangesAsync();
+                // Return success response
+                return Ok(new
+                {
+                    Message = "Login successful",
+                    UserId = user.Id,
+                    Email = user.Email,
+                    Username = user.UserName
+                });
 
 
-                    return Ok(new { Token = tokenString, Message = "Login successful", UserId = user.Id, Email = user.Email, Username = user.UserName });
-                }
-
-                if (result.IsLockedOut)
-                    return BadRequest(new { Message = "Account is locked out." });
-
-                return BadRequest(new { Message = "Invalid login attempt." });
             }
             catch (Exception ex)
             {
-                
+                _logger.LogError(ex, "An error occurred during login.");
                 return StatusCode(500, new { Message = "An error occurred during login", Error = ex.Message });
             }
         }
+
+
+
+        [HttpGet("refresh-token")]
+        public async Task<IActionResult> RefreshToken()
+        {
+            try
+            {
+                var refreshToken = Request.Cookies["refresh_token"];
+                if (string.IsNullOrEmpty(refreshToken))
+                    return Unauthorized(new { Message = "Refresh token is missing." });
+
+                // Fetch refresh token from the database
+                var tokenEntry = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == refreshToken);
+                if (tokenEntry == null || tokenEntry.ExpiresAt < DateTime.UtcNow)
+                    return Unauthorized(new { Message = "Invalid or expired refresh token." });
+
+                // Find user associated with refresh token
+                var user = await _userManager.Users.SingleOrDefaultAsync(u => u.Id == tokenEntry.UserId);
+                if (user == null)
+                    return Unauthorized(new { Message = "User not found." });
+
+                // Generate new tokens
+                var newAccessToken = _tokenService.GenerateAccessToken(user);
+                var newRefreshToken = _tokenService.GenerateRefreshToken();
+
+                // Save the new refresh token in the database
+                tokenEntry.Token = newRefreshToken;
+                tokenEntry.ExpiresAt = DateTime.UtcNow.AddDays(7);
+                await _context.SaveChangesAsync();
+
+                // Set the new refresh token as a cookie
+                Response.Cookies.Append("refresh_token", newRefreshToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTime.UtcNow.AddDays(7)
+                });
+
+                return Ok(new
+                {
+                    AccessToken = newAccessToken,
+                    RefreshToken = newRefreshToken
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred during token refresh.");
+                return StatusCode(500, new { Message = "An error occurred during token refresh", Error = ex.Message });
+            }
+        }
+
+
+
+        [HttpDelete]
+        public async Task RevokeTokenAsync(User user)
+        {
+            if (user == null)
+                throw new ArgumentNullException(nameof(user));
+
+            // Remove all refresh tokens for the specified user
+            var userTokens = await _context.RefreshTokens
+                .Where(t => t.UserId == user.Id)
+                .ToListAsync();
+
+            if (userTokens.Count != 0)
+            {
+                _context.RefreshTokens.RemoveRange(userTokens);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+
 
 
         [Authorize] // Ensures the token is validated
