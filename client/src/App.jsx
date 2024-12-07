@@ -5,7 +5,7 @@ import Layout from "./components/Layout/Layout";
 import Home from "./Pages/Home";
 import NotFound from "./Pages/NotFound";
 import CreateShopForm from "./Pages/createShopForm";
-import { AuthProvider, useAuth } from "./authContext";
+import { AuthProvider, useAuth } from "./Context/AuthContext";
 
 function App() {
   return (

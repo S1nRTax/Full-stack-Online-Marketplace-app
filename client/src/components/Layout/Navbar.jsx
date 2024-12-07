@@ -1,26 +1,9 @@
-import React from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../authContext';
+import React from 'react';
+import { Link } from 'react-router-dom'; 
+import { useAuth } from '../../Context/AuthContext';
 
 const Navbar = () => {
-  const { isLoggedin , setIsLoggedin } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    try {
-      const response = await fetch('https://localhost:7262/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-  
-      if (response.ok) {
-        setIsLoggedin(false);
-         navigate("/" , {replace : true});
-      }
-    } catch (error) {
-      console.error('Logout failed', error);
-    }
-  }
+  const { isLoggedIn , logOut} = useAuth(); 
 
   return (
     <nav className="bg-gray-800 text-white p-4">
@@ -30,10 +13,10 @@ const Navbar = () => {
         </Link>
         <div className="space-x-4">
           <Link to="/" className="hover:text-gray-300">Home</Link>
-          {isLoggedin ? (
+          {isLoggedIn ? (
             <>
               <Link to="/profile" className="hover:text-gray-300">Profile</Link>
-              <button onClick={handleLogout} className="text-red-500">
+              <button onClick={logOut}  className="text-red-500">
                 Logout
               </button>
             </>
@@ -46,7 +29,7 @@ const Navbar = () => {
         </div>
       </div>
     </nav>
-  )
-}
+  );
+};
 
 export default Navbar;

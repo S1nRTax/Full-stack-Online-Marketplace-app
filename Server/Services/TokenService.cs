@@ -87,7 +87,7 @@ namespace Server.Services
 
             try
             {
-                var tokenEntry = await _context.RefreshTokens
+                var tokenEntry = await _context.AccessTokens
                                                .FirstOrDefaultAsync(t => t.Token == refreshToken);
 
                 if (tokenEntry == null)
@@ -106,36 +106,58 @@ namespace Server.Services
         }
 
 
-        public async Task SaveRefreshTokenAsync(User user, RefreshToken refreshToken)
-        { 
-            // Find existing token for the user
-            var existingToken = await _context.RefreshTokens
-                .FirstOrDefaultAsync(t =>
-                    t.UserId == user.Id &&
-                    t.Token == refreshToken.Token);
 
-            // Set consistent expiration and creation times
-            refreshToken.ExpiresAt = DateTime.UtcNow.AddDays(7);
-            refreshToken.CreateAt = DateTime.UtcNow;
-            refreshToken.UserId = user.Id;
+        public async Task SaveAccessTokenAsync(User user, string token)
+        {
+            // Create a new AccessToken instance
+            var accessToken = new AccessToken
+            {
+                Token = token,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                CreateAt = DateTime.UtcNow,
+                UserId = user.Id
+            };
+
+            // Check if a token with the same value already exists
+            var existingToken = await _context.AccessTokens
+                .AsNoTracking() // Avoid EF tracking conflicts
+                .FirstOrDefaultAsync(t => t.Token == token);
 
             if (existingToken != null)
             {
-                // Update existing token
-                _context.Entry(existingToken).CurrentValues.SetValues(refreshToken);
+                // Detach the existing entity to prevent tracking conflicts
+                _context.Entry(existingToken).State = EntityState.Detached;
+                _context.AccessTokens.Update(accessToken);
             }
             else
             {
-                // Add new token
-                await _context.RefreshTokens.AddAsync(refreshToken);
+                // Remove old tokens for the user
+                var oldTokens = _context.AccessTokens.Where(t => t.UserId == user.Id);
+                _context.AccessTokens.RemoveRange(oldTokens);
+
+                // Add the new token
+                await _context.AccessTokens.AddAsync(accessToken);
             }
 
-            await _context.SaveChangesAsync();
+            // Save changes
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                // Log the error for debugging
+                Console.Error.WriteLine($"Error saving access token: {ex.Message}");
+                throw;
+            }
         }
 
 
 
-        public  void SetRefreshToken(RefreshToken refreshToken, User user)
+
+
+
+        public void SetAccessToken(AccessToken accessToken, User user)
         {
 
             if (_httpContextAccessor.HttpContext == null)
@@ -143,10 +165,10 @@ namespace Server.Services
                 throw new InvalidOperationException("HttpContext is not available.");
             }
 
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("refresh_token", refreshToken.Token,
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("refresh_token", accessToken.Token,
                 new CookieOptions
                 {
-                    Expires = refreshToken.ExpiresAt,
+                    Expires = accessToken.ExpiresAt,
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None

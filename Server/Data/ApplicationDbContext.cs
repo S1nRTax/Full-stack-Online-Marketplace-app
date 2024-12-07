@@ -10,7 +10,7 @@ namespace Server.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Customer> Customers { get; set; }
-        public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<AccessToken> AccessTokens { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -36,15 +36,15 @@ namespace Server.Data
                 .IsRequired(false);
 
             // Define unique constraint for RefreshToken's token
-            modelBuilder.Entity<RefreshToken>()
+            modelBuilder.Entity<AccessToken>()
                 .HasIndex(r => r.Token)  // Index on token for faster lookups
                 .IsUnique();
 
             // 1-to-1 Relationship between User and RefreshToken
-            modelBuilder.Entity<RefreshToken>()
+            modelBuilder.Entity<AccessToken>()
                 .HasOne(rt => rt.User)          
-                .WithOne(u => u.RefreshToken)   
-                .HasForeignKey<RefreshToken>(rt => rt.UserId)  
+                .WithOne(u => u.AccessToken)   
+                .HasForeignKey<AccessToken>(rt => rt.UserId)  
                 .OnDelete(DeleteBehavior.Cascade);  
         }
     }

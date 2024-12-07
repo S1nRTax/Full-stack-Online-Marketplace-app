@@ -16,6 +16,6 @@ namespace Server.Models
         // navigation properties:
         public Vendor Vendor { get; set; }
         public Customer Customer { get; set; }
-        public virtual RefreshToken RefreshToken { get; set; }
+        public virtual AccessToken AccessToken { get; set; }
     }
 }

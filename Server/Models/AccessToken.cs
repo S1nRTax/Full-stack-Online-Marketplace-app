@@ -2,7 +2,7 @@
 
 namespace Server.Models
 {
-    public class RefreshToken
+    public class AccessToken
     {
         [Key]
         public string Token {  get; set; }   

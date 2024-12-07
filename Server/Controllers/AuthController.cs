@@ -133,21 +133,22 @@ namespace Server.Controllers
                 {
                     HttpOnly = true,
                     Secure = true,
-                    SameSite = SameSiteMode.None, // Ensure CSRF protection elsewhere
-                    Expires = DateTime.UtcNow.AddMinutes(1)
+                    SameSite = SameSiteMode.None, 
+                    Expires = DateTime.UtcNow.AddDays(7)
                 };
                 HttpContext.Response.Cookies.Append("access_token", accessToken, cookieOptions);
 
                 // Generate and save refresh token
-                var refreshToken = new RefreshToken
+                var refreshToken = new AccessToken
                 {
                     Token = _tokenService.GenerateRefreshToken(),
-                    ExpiresAt = DateTime.UtcNow.AddDays(7),
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(5),
                     CreateAt = DateTime.UtcNow
                 };
 
-                _tokenService.SetRefreshToken(refreshToken, user);
-                await _tokenService.SaveRefreshTokenAsync(user , refreshToken);
+                _tokenService.SetAccessToken(refreshToken, user);
+
+                await _tokenService.SaveAccessTokenAsync(user , accessToken);
 
                 await _context.SaveChangesAsync();
                 // Return success response
@@ -169,37 +170,56 @@ namespace Server.Controllers
         }
 
 
-
-        [HttpGet("refresh-token")]
+        [HttpGet("refreshToken")]
         public async Task<IActionResult> RefreshToken()
         {
             try
             {
-                var refreshToken = Request.Cookies["refresh_token"];
-                if (string.IsNullOrEmpty(refreshToken))
-                    return Unauthorized(new { Message = "Refresh token is missing." });
+                // Extract access token from cookies
+                var accessToken = Request.Cookies["access_token"];
+                if (string.IsNullOrEmpty(accessToken))
+                    return Unauthorized(new { Message = "Access token is missing." });
 
-                // Fetch refresh token from the database
-                var tokenEntry = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == refreshToken);
-                if (tokenEntry == null || tokenEntry.ExpiresAt < DateTime.UtcNow)
-                    return Unauthorized(new { Message = "Invalid or expired refresh token." });
+                // Validate the access token in the database
+                var tokenEntry = await _context.AccessTokens
+                    .FirstOrDefaultAsync(t => t.Token == accessToken);
 
-                // Find user associated with refresh token
+                if (tokenEntry == null || tokenEntry.ExpiresAt <= DateTime.UtcNow)
+                {
+                    // Token is invalid or expired
+                    if (tokenEntry != null)
+                        _context.AccessTokens.Remove(tokenEntry); // Remove expired token
+                    await _context.SaveChangesAsync();
+                    return Unauthorized(new { Message = "Invalid or expired access token." });
+                }
+
+                // Find the user associated with the access token
                 var user = await _userManager.Users.SingleOrDefaultAsync(u => u.Id == tokenEntry.UserId);
                 if (user == null)
                     return Unauthorized(new { Message = "User not found." });
 
-                // Generate new tokens
+                // Generate a new access token
                 var newAccessToken = _tokenService.GenerateAccessToken(user);
-                var newRefreshToken = _tokenService.GenerateRefreshToken();
 
-                // Save the new refresh token in the database
-                tokenEntry.Token = newRefreshToken;
-                tokenEntry.ExpiresAt = DateTime.UtcNow.AddDays(7);
+                // Generate a new refresh token
+                var newRefreshToken = _tokenService.GenerateRefreshToken(64);
+
+                // Remove the old token
+                _context.AccessTokens.Remove(tokenEntry);
+
+                // Save the new access token and refresh token in the database
+                var newTokenEntry = new AccessToken
+                {
+                    Token = newAccessToken,
+                    UserId = user.Id,
+                    CreateAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddDays(7)
+                };
+                _context.AccessTokens.Add(newTokenEntry);
                 await _context.SaveChangesAsync();
 
-                // Set the new refresh token as a cookie
-                Response.Cookies.Append("refresh_token", newRefreshToken, new CookieOptions
+                // Set the new access token and refresh token as cookies
+                Response.Cookies.Append("access_token", newAccessToken, new CookieOptions
                 {
                     HttpOnly = true,
                     Secure = true,
@@ -207,6 +227,15 @@ namespace Server.Controllers
                     Expires = DateTime.UtcNow.AddDays(7)
                 });
 
+                Response.Cookies.Append("refresh_token", newRefreshToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTime.UtcNow.AddMinutes(5)
+                });
+
+                // Return the new tokens in the response
                 return Ok(new
                 {
                     AccessToken = newAccessToken,
@@ -222,6 +251,7 @@ namespace Server.Controllers
 
 
 
+
         [HttpDelete]
         public async Task RevokeTokenAsync(User user)
         {
@@ -229,13 +259,13 @@ namespace Server.Controllers
                 throw new ArgumentNullException(nameof(user));
 
             // Remove all refresh tokens for the specified user
-            var userTokens = await _context.RefreshTokens
+            var userTokens = await _context.AccessTokens
                 .Where(t => t.UserId == user.Id)
                 .ToListAsync();
 
             if (userTokens.Count != 0)
             {
-                _context.RefreshTokens.RemoveRange(userTokens);
+                _context.AccessTokens.RemoveRange(userTokens);
                 await _context.SaveChangesAsync();
             }
         }

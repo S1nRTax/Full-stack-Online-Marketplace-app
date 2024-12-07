@@ -7,7 +7,7 @@ namespace Server.Services
         string GenerateAccessToken(User user);
         string GenerateRefreshToken(int size =64);
         Task<string> RetrieveUseridByRefreshToken(string refreshToken);
-        Task SaveRefreshTokenAsync(User user, RefreshToken refreshToken);
-        void SetRefreshToken(RefreshToken refreshToken, User user);
+        Task SaveAccessTokenAsync(User user, string token);
+        void SetAccessToken(AccessToken refreshToken, User user);
     }
 }

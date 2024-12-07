@@ -1,54 +1,29 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../Context/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../authContext';
 
 const Login = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const { isLoggedin, setIsLoggedin, setUser, verifyAuth } = useAuth(); // Destructure verifyAuth here
-    const [errorMessage, setErrorMessage] = useState(null);
 
-    async function handleLoginSubmit(event) {
-        event.preventDefault();
+    const { isLoggedIn, logIn ,setErrorMessage , errorMessage}  = useAuth();
+    const [email , setEmail] = useState("");
+    const [password , setPassword] = useState("");
+
+    const handleLoginSubmit = async (e) => {
+        e.preventDefault();
         try {
-            const item = { email, password };
-            const result = await fetch('https://localhost:7262/api/auth/login', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(item),
-            });
 
-            const text = await result.text(); // Get text first
-
-            if (result.ok) {
-                const userData = text ? JSON.parse(text) : {}; // Check for empty response
-                setUser({
-                    id: userData.userId,
-                    username: userData.username,
-                    email: userData.email,
-                });
-                setIsLoggedin(true);
-
-                // Call verifyAuth after successful login
-                verifyAuth(); // Trigger token verification
-                setErrorMessage(null);
-            } else {
-                const errorData = text ? JSON.parse(text) : { message: 'Login failed' };
-                setErrorMessage({ message: errorData.message || 'Login failed' });
-            }
+          await logIn(email, password);
+    
         } catch (error) {
-            console.error('Error during fetch:', error);
-            setErrorMessage({ message: "Something went wrong. Please try again!" });
+          console.error(error);
+          setErrorMessage(error.message);
         }
-    }
+      };
 
-    if (isLoggedin) {
-        return <Navigate to="/" replace />;
-    }
+      if(isLoggedIn){
+        return <Navigate to="/" replace />
+      }
+    
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
