@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../Context/AuthContext';
+import { useAuth } from '../Context/authContext';
 import { Navigate } from 'react-router-dom';
 
 const Login = () => {
@@ -8,6 +8,7 @@ const Login = () => {
     const [email , setEmail] = useState("");
     const [password , setPassword] = useState("");
 
+        
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
         try {

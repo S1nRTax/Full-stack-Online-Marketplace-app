@@ -10,7 +10,7 @@ export function AuthProvider({ children }) {
     const [authUser, setAuthUser] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [errorMessage, setErrorMessage] = useState(null);
-
+    const [isLoading , setIsloading] = useState(null);
     const API_URL = "https://localhost:7262/api";
 
     // Function to handle login
@@ -25,11 +25,13 @@ export function AuthProvider({ children }) {
 
             if (response.ok) {
                 await validateAuth(); 
+                setIsloading(true);
                 setErrorMessage(null);
             } else {
                 const { message } = await response.json();
                 setErrorMessage(message || "Login failed");
             }
+            setIsloading(false);
         } catch (error) {
             console.error('Login error:', error);
             setErrorMessage("Something went wrong. Please try again.");
@@ -50,11 +52,13 @@ export function AuthProvider({ children }) {
             if (response.ok) {
                 const userData = await response.json();
                 setAuthUser(userData);
+                setIsloading(true);
                 setIsLoggedIn(true);
             } else {
                 console.error('Validation failed');
                 logOut();
             }
+            setIsloading(false);
         } catch (error) {
             console.error('Validation error:', error);
             logOut();
@@ -92,6 +96,7 @@ export function AuthProvider({ children }) {
 
             if (response.ok) {
                 await validateAuth(); 
+                setIsloading(true);
             } else {
                 console.error('Refresh token failed');
                 logOut();
@@ -100,6 +105,7 @@ export function AuthProvider({ children }) {
             console.error('Refresh error:', error);
             logOut();
         }
+        setIsloading(false);
     };
 
     // Periodic Authentification check:
@@ -111,17 +117,17 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         const interval = setInterval(() => {
             if (isLoggedIn) {
-                console.warn("token refreshed!");
                 refreshAccessToken();
             }
-        }, 1 * 60 * 1000); // Refresh every 15 minutes
+        }, 14 * 60 * 1000); // Refresh every 14 minutes since the refresh token expires every 15 min.
 
         return () => clearInterval(interval);
     }, [isLoggedIn]);
 
-    const value = {
+    const value = { 
         authUser,
         isLoggedIn,
+        isLoading,
         logIn,
         logOut,
         errorMessage,

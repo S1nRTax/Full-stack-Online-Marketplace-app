@@ -5,7 +5,9 @@ import Layout from "./components/Layout/Layout";
 import Home from "./Pages/Home";
 import NotFound from "./Pages/NotFound";
 import CreateShopForm from "./Pages/createShopForm";
-import { AuthProvider, useAuth } from "./Context/AuthContext";
+import Profile from "./Pages/Profile";
+import { AuthProvider } from "./Context/authContext";
+import { useAuth } from "./Context/authContext";
 
 function App() {
   return (
@@ -37,6 +39,7 @@ function AppRoutes() {
         <Route index element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/Profile" element={<Profile />} />
         <Route path="/create-shop" element={<CreateShopForm />} />
         <Route path="*" element={<NotFound />} />
       </Route>
