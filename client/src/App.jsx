@@ -4,19 +4,22 @@ import Login from "./Pages/Login";
 import Layout from "./components/Layout/Layout";
 import Home from "./Pages/Home";
 import NotFound from "./Pages/NotFound";
-import CreateShopForm from "./Pages/createShopForm";
+import CreateShopForm from "./Pages/CreateShopForm";
 import Profile from "./Pages/Profile";
-import { AuthProvider } from "./Context/authContext";
-import { useAuth } from "./Context/authContext";
+import { AuthProvider , useAuth } from "./Context/AuthContext";
+import { TransitionProvider } from "./Context/TranstitionContext";
 
 function App() {
   return (
     <AuthProvider>
-      <div className="flex flex-col min-h-screen">
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </div>
+      <TransitionProvider>
+        <div className="flex flex-col min-h-screen">
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </div>
+      </TransitionProvider>
+      
     </AuthProvider>
   );
 }

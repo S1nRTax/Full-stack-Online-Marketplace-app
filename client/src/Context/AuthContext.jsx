@@ -126,6 +126,7 @@ export function AuthProvider({ children }) {
 
     const value = { 
         authUser,
+        setErrorMessage,
         isLoggedIn,
         isLoading,
         logIn,

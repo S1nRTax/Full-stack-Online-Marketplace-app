@@ -1,18 +1,27 @@
-import React, { useState } from 'react'
-
-
-
+import React, { useState  } from 'react'
+import { useVendor } from '../Context/TranstitionContext';
+import { Navigate } from 'react-router-dom';
 
 
 const CreateShopForm = () => {
+  
   const [shopName , setShopName] = useState("");
   const [shopAddress , setShopAddress] = useState("");
   const [shopDescription , setShopDescription] = useState("");
+  const { transitionToVendor , isVendor } = useVendor();
 
-  async function handleCreateShopSubmit(){
-      
+  async function handleCreateShopSubmit(e){
+     e.preventDefault();
+      try {
+            await transitionToVendor(shopName , shopAddress , shopDescription);
+      }catch(error){
+        console.error("(handleCreateShopSubmit:",error);
+      }
   }
 
+  if(isVendor){
+    return <Navigate to="/profile" replace />
+  }
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">

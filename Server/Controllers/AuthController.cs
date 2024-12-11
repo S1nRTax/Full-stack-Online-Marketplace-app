@@ -142,7 +142,7 @@ namespace Server.Controllers
                 var refreshToken = new AccessToken
                 {
                     Token = _tokenService.GenerateRefreshToken(),
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(15),
                     CreateAt = DateTime.UtcNow
                 };
 
@@ -232,7 +232,7 @@ namespace Server.Controllers
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
-                    Expires = DateTime.UtcNow.AddMinutes(5)
+                    Expires = DateTime.UtcNow.AddMinutes(15)
                 });
 
                 // Return the new tokens in the response
@@ -294,6 +294,7 @@ namespace Server.Controllers
             return Ok(new
             { 
                 id = user.Id,
+                user.Name,
                 username = user.UserName,
                 email = user.Email
             });

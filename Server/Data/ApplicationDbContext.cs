@@ -26,6 +26,7 @@ namespace Server.Data
                 .HasOne(u => u.Customer)
                 .WithOne(c => c.User)
                 .HasForeignKey<Customer>(c => c.Id)
+                .OnDelete(DeleteBehavior.SetNull)
                 .IsRequired(false);
 
             // 1-to-1 Relationship between User and Vendor
@@ -33,6 +34,7 @@ namespace Server.Data
                 .HasOne(u => u.Vendor)
                 .WithOne(v => v.User)
                 .HasForeignKey<Vendor>(v => v.Id)
+                .OnDelete(DeleteBehavior.SetNull)
                 .IsRequired(false);
 
             // Define unique constraint for RefreshToken's token
@@ -45,7 +47,10 @@ namespace Server.Data
                 .HasOne(rt => rt.User)          
                 .WithOne(u => u.AccessToken)   
                 .HasForeignKey<AccessToken>(rt => rt.UserId)  
-                .OnDelete(DeleteBehavior.Cascade);  
+                .OnDelete(DeleteBehavior.Cascade);
+
+
+           
         }
     }
 }
