@@ -25,14 +25,12 @@ namespace Server.Services
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null) return false;
                 if (await IsCustomerAsync(userId)) return false;
-                string profilePicture = string.IsNullOrWhiteSpace(customerDetails.ProfilePicture)
-                    ? "/images/user.png"
-                    : customerDetails.ProfilePicture;
+                
                 var newCustomer = new Customer
                 {
                     Id = userId,
-                    ProfilePicture = profilePicture,
-                    Username = user.UserName
+                    PurchaseCount = 0,
+                    TotalSpent = 0,
                 };
                 _context.Customers.Add(newCustomer);
                 await _context.SaveChangesAsync();

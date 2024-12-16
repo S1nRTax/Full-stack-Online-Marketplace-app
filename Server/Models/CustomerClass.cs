@@ -4,10 +4,11 @@ namespace Server.Models
 {
     public class Customer
     {
-        public int CustomerId { get; set; } // Unique identifier for the 
-        public string Username { get; set; } = string.Empty;
-        public string? ProfilePicture { get; set; } // URL or path to the profile picture
+        public int CustomerId { get; set; } // Unique identifier for 
 
+        public int PurchaseCount { get; set; }
+
+        public double TotalSpent { get; set; }
 
         [ForeignKey("User")] 
         public string Id { get; set; } // Foreign key to link with User

@@ -40,6 +40,7 @@ namespace Server.Controllers
             _logger = logger;
         }
 
+        const string DefaultProfilePicturePath = "/images/user.png";
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
@@ -61,7 +62,7 @@ namespace Server.Controllers
                     return BadRequest(ModelState);
                 }
                 // this checks if the Email is already taken
-                var existingUserByEmail = await _userManager.FindByNameAsync(model.Email);
+                var existingUserByEmail = await _userManager.FindByEmailAsync(model.Email);
                 if (existingUserByEmail != null)
                 {
                     ModelState.AddModelError("Email", "Email is already taken.");
@@ -76,11 +77,13 @@ namespace Server.Controllers
                     Email = model.Email,
                     EmailConfirmed = true,
                     CreatedAt = DateTime.UtcNow,
-                    IsActive = false
+                    IsActive = false,
+                    HasShop = false,
+                    ProfilePicturePath = DefaultProfilePicturePath
                 };
                 // hashing password
                 var result = await _userManager.CreateAsync(user, model.Password);
-
+                
                 if (!result.Succeeded)
                 {
                     return BadRequest(new
@@ -103,7 +106,7 @@ namespace Server.Controllers
                 return Ok(new
                 {
                     Message = "Registration successful",
-                    User = new { user.Id, user.UserName , user.Name, user.Email}
+                    User = new { user.Id, user.UserName , user.Name, user.Email , user.ProfilePicturePath}
                 });
             }
             catch (Exception ex)
@@ -294,7 +297,8 @@ namespace Server.Controllers
                 id = user.Id,
                 user.Name,
                 username = user.UserName,
-                email = user.Email
+                email = user.Email,
+                profilePicture = user.ProfilePicturePath
             });
         }
 
@@ -313,6 +317,11 @@ namespace Server.Controllers
 
             return Ok(new { Message = "Logged out successfully!" });
         }
+
+
+
+
+
 
 
     }

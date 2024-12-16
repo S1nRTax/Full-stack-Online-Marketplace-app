@@ -5,28 +5,38 @@ import { User, Mail, Camera, SmilePlus } from 'lucide-react';
 import { useVendor } from '../Context/TranstitionContext';
 
 const Profile = () => {
-    const { isLoggedIn, authUser} = useAuth();
+    const { isLoggedIn, authUser ,validateAuth} = useAuth();
     const {vendorData ,isVendor , validateVendorStatus }= useVendor();
+    const [ profileData , setProfileData] = useState("");
     
-    const [profileImage, setProfileImage] = useState(null);
+    
+    console.log(authUser);
+    
+    const API_BASE_URL = import.meta.env.VITE_API_URL.replace('/api', '');
 
-    
-    // Handle profile image upload
-    const handleImageUpload = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setProfileImage(reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    
+   
+  // const profilePictureSrc = `${API_BASE_URL}/images/user.png` 
+
+  const profilePictureSrc = authUser.profilePicturePath 
+    ? `${API_BASE_URL}${authUser.profilePicturePath}`
+    : `${API_BASE_URL}/images/user.png`;
+
+            
+        
+        
+    useEffect(() => {
+            if (authUser) {
+                setProfileData(authUser);
+            }
+        }, [authUser]);
+   
+  
 
     useEffect(() => {
-        validateVendorStatus();
+        validateVendorStatus
     }, [validateVendorStatus]);
+
+    
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -36,8 +46,8 @@ const Profile = () => {
 
                     {isLoggedIn ? (
                         <div className="space-y-6">
-                            {/* Profile Image Section */}
-                            <div className="relative mx-auto w-32 h-32">
+                            {/* Profile Image Section 
+                              <div className="relative mx-auto w-32 h-32">
                                 <input 
                                     type="file" 
                                     accept="image/*" 
@@ -48,25 +58,21 @@ const Profile = () => {
                                 <label 
                                     htmlFor="profilePicUpload" 
                                     className="cursor-pointer absolute inset-0"
-                                >
+                                >   </label>
+                            </div>*/}
                                     <div className="w-full h-full rounded-full border-4 border-gray-200 overflow-hidden">
-                                        {profileImage ? (
+
                                             <img 
-                                                src={profileImage} 
+                                                src={profilePictureSrc} 
                                                 alt="Profile" 
                                                 className="w-full h-full object-cover"
                                             />
-                                        ) : (
-                                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                                <User className="w-16 h-16 text-gray-400" />
-                                            </div>
-                                        )}
+
                                     </div>
                                     <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2">
                                         <Camera className="w-4 h-4 text-white" />
                                     </div>
-                                </label>
-                            </div>
+                              
 
                             {/* User Details Section */}
                             <div className="space-y-4">

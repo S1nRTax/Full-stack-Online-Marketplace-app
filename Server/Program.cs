@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Server.Data;
 using Server.Models;
@@ -38,6 +39,7 @@ namespace Server
             builder.Services.AddScoped<IUserTransitionService, UserTransitionService>();
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddControllers();
+            builder.Services.AddScoped<IProfilePictureService, ProfilePictureService>();
 
             // Configure the database connection
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -85,6 +87,7 @@ namespace Server
                 };
             });
 
+           
 
 
             // Add CORS policy
@@ -100,6 +103,15 @@ namespace Server
             });
 
             var app = builder.Build();
+
+            // to serve static files : 
+            app.UseStaticFiles();
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "images")),
+                RequestPath = "/Images"
+            });
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

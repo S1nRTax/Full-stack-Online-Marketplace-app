@@ -4,7 +4,7 @@ namespace Server.Models
 {
     public class CustomerCreationDto
     {
-        public string? ProfilePicture { get; set; }
+        public string ProfilePicture { get; set; }
 
     }
 }
