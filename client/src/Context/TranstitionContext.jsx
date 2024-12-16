@@ -17,74 +17,114 @@ export const TransitionProvider = ({ children }) => {
     const { authUser, setErrorMessage } = useAuth(); 
     const API_URL = "https://localhost:7262/api";
 
-    // function to transition a normal user to a vendor.
-    const transitionToVendor = useCallback(async (shopName, shopAddress, shopDescription) => {
-        // Validate inputs
+  
+
+    const transitionToVendor = async (shopName, shopAddress, shopDescription) => {
+        // Input validation
         if (!shopName || !shopAddress) {
             setErrorMessage('Shop name and address are required');
+            console.log("im here");
             return false;
         }
 
-        // Ensure userId exists
+        // Authentication check
         if (!authUser?.id) {
             setErrorMessage('User authentication failed');
+            console.log("im here");
             return false;
         }
 
-        const items = { shopName, shopAddress, shopDescription };
+        const vendorDetails = { shopName, shopAddress, shopDescription };
         const userId = authUser.id;
+        console.log(vendorData);
 
         try {
             const response = await fetch(`${API_URL}/transition/become-vendor/${userId}`, {
                 method: 'POST',
+                mode: 'cors',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    // Consider adding authorization header if needed
-                    // 'Authorization': `Bearer ${authUser.token}`
                 },
-                body: JSON.stringify(items),
+                body: JSON.stringify(vendorDetails),
             });
 
-            // More comprehensive error handling
+            // Log response details for debugging
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error Response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    body: errorText,
+                });
+            }
+
             if (response.ok) {
-                const vendorData = await response.json();
-                setVendorData(vendorData);
-                setIsVendor(true);
-                
-                // Use setErrorMessage to clear any previous errors
-                setErrorMessage('');
-                
-                console.info("User has been transitioned successfully!");
+                await validateVendorStatus();
+                console.info('User has been transitioned successfully!');
                 return true;
             } else {
-                // More robust error parsing
                 const errorData = await response.json().catch(() => ({
-                    message: 'An unexpected error occurred'
+                    message: 'An unexpected error occurred',
                 }));
-                
-                // Use the provided setErrorMessage from AuthContext
                 setErrorMessage(errorData.message || 'Failed to transition to vendor');
-                
                 return false;
             }
         } catch (error) {
-            // More informative error handling
             const errorMessage = error instanceof Error 
                 ? error.message 
                 : 'An unexpected network error occurred';
-            
+
             setErrorMessage(errorMessage);
             console.error('Vendor transition error:', error);
-            
             return false;
         }
-    }, [authUser, setErrorMessage, API_URL]);
+    };
+
+    const validateVendorStatus = useCallback(async () => {
+        try {
+            const response = await fetch(`${API_URL}/transition/validateVendor`, {
+                method: 'GET', 
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const vendorData = await response.json();
+                setVendorData(vendorData);
+                setIsVendor(vendorData.isVendor); // Set state based on backend response
+                setErrorMessage('');
+                return true;
+            } else {
+                const errorData = await response.json().catch(() => ({
+                    message: 'An unexpected error occurred',
+                }));
+                setErrorMessage(errorData.message || 'Failed to validate vendor status');
+                setIsVendor(false);
+                setVendorData(null);
+                return false;
+            }
+        } catch (error) {
+            const errorMessage = error instanceof Error 
+                ? error.message 
+                : 'An unexpected network error occurred';
+
+            setErrorMessage(errorMessage);
+            console.error('Vendor status validation error:', error);
+            setIsVendor(false);
+            setVendorData(null);
+            return false;
+        }
+    }, [API_URL, setErrorMessage]);
 
     const value = {
         transitionToVendor,
+        validateVendorStatus,
         vendorData,
-        isVendor
+        isVendor,
+        setIsVendor,
     };
 
     return (

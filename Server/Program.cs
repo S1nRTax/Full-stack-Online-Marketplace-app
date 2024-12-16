@@ -85,6 +85,8 @@ namespace Server
                 };
             });
 
+
+
             // Add CORS policy
             builder.Services.AddCors(options =>
             {

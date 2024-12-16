@@ -1,4 +1,4 @@
-import React, { useState  } from 'react'
+import React, { useState , useEffect } from 'react'
 import { useVendor } from '../Context/TranstitionContext';
 import { Navigate } from 'react-router-dom';
 
@@ -8,20 +8,27 @@ const CreateShopForm = () => {
   const [shopName , setShopName] = useState("");
   const [shopAddress , setShopAddress] = useState("");
   const [shopDescription , setShopDescription] = useState("");
-  const { transitionToVendor , isVendor } = useVendor();
+  const { transitionToVendor, validateVendorStatus , isVendor ,setIsVendor } = useVendor();
 
-  async function handleCreateShopSubmit(e){
-     e.preventDefault();
-      try {
-            await transitionToVendor(shopName , shopAddress , shopDescription);
-      }catch(error){
-        console.error("(handleCreateShopSubmit:",error);
-      }
-  }
 
-  if(isVendor){
-    return <Navigate to="/profile" replace />
-  }
+        const handleBecomeVendor = async (e) => {
+            e.preventDefault();
+            const response = await transitionToVendor(shopName, shopAddress, shopDescription);
+             console.log(isVendor);
+             if(response.isVendor){
+                setIsVendor(true);
+             }
+        };
+
+        useEffect(() => {
+            validateVendorStatus();
+        }, [validateVendorStatus]);
+
+        
+        if (isVendor) {
+            return <Navigate to="/profile" replace />;
+        }
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
@@ -30,7 +37,7 @@ const CreateShopForm = () => {
               <h2 className="text-center text-3xl font-extrabold text-gray-900 mb-6">Create Your Shop!</h2>
           </div>
           {/** Form */}
-          <form className="w-full" onSubmit={handleCreateShopSubmit}>
+          <form className="w-full" onSubmit={handleBecomeVendor}>
               <div className="space-y-4">
                   {/* Shop Name Input */}
                   <div>

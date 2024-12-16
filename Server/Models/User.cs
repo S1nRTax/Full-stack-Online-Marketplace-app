@@ -12,6 +12,7 @@ namespace Server.Models
 
         public bool IsActive { get; set; } = true;
 
+        public bool HasShop { get; set; } = false;
 
         // navigation properties:
         public Vendor Vendor { get; set; }

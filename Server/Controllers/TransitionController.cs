@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Server.Data;
 using Server.Models;
 using Server.Services;
+using System.Security.Claims;
 
 namespace Server.Controllers
 {
@@ -34,17 +37,9 @@ namespace Server.Controllers
         }
 
 
-        /// <summary>
-        /// Converts a user to a vendor.
-        /// </summary>
-        /// <param name="userId">The ID of the user to convert.</param>
-        /// <param name="vendorDetails">The details of the vendor to create.</param>
-        /// <returns>HTTP response indicating the success or failure of the operation.</returns>
         [HttpPost("become-vendor/{userId}")]
         [Authorize]
-        public async Task<IActionResult> BecomeVendor(
-            [FromRoute] string userId,
-            [FromBody] VendorCreationDto vendorDetails)
+        public async Task<IActionResult> BecomeVendor([FromRoute] string userId, [FromBody] VendorCreationDto vendorDetails)
         {
             // Validate input parameters
             if (string.IsNullOrWhiteSpace(userId))
@@ -61,14 +56,13 @@ namespace Server.Controllers
                     return NotFound($"User with ID {userId} not found.");
 
                 // Validate vendor creation details
-                var validationResult = ValidateVendorDetails(vendorDetails);
+                var validationResult = await ValidateVendorDetails(vendorDetails);
                 if (!validationResult.IsValid)
                     return BadRequest(validationResult.ErrorMessage);
 
-                
                 // Attempt to transition user to vendor
                 var result = await _userTransitionService.BecomeVendorAsync(userInfo.Id.ToString(), vendorDetails);
-                    
+
                 // Handle vendor creation failure
                 if (!result)
                 {
@@ -89,6 +83,7 @@ namespace Server.Controllers
                 return CreatedAtAction(nameof(BecomeVendor), new
                 {
                     Message = "User successfully transitioned to vendor.",
+                    userInfo.HasShop,
                     VendorId = userInfo.Vendor.VendorId,
                     ShopName = userInfo.Vendor.ShopName,
                     ShopAddress = userInfo.Vendor.ShopAddress,
@@ -105,9 +100,8 @@ namespace Server.Controllers
         }
 
         // Vendor details validation method
-        public (bool IsValid, string ErrorMessage) ValidateVendorDetails(VendorCreationDto vendorDetails)
+        public async Task<(bool IsValid, string ErrorMessage)> ValidateVendorDetails(VendorCreationDto vendorDetails)
         {
-            // Comprehensive validation for vendor creation
             if (string.IsNullOrWhiteSpace(vendorDetails.ShopName))
                 return (false, "Shop name is required.");
 
@@ -120,16 +114,61 @@ namespace Server.Controllers
             if (vendorDetails.ShopAddress.Length > 250)
                 return (false, "Shop address is too long.");
 
+            // Additional validations can be added here
 
-            //todo
-            // Add more specific validations as needed
-            // Examples:
-            // - Check for valid address format
-            // - Validate description length
-            // - Perform any business-specific validations
+            // Check if the current user has a shop
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUser = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == currentUserId);
+
+            if (currentUser == null)
+            {
+                return (false, "Current user not found.");
+            }
+
+            currentUser.HasShop = true;
+            await _userManager.UpdateAsync(currentUser);
 
             return (true, null);
         }
+
+
+
+        // API endpoint to validate a vendor.
+        [HttpGet("validateVendor")]
+        [Authorize]
+        public async Task<IActionResult> ValidateVendor()
+        {
+            try
+            {
+                // get the current logged in User with claims to load the navigations properties.
+                var user = await _userManager.Users
+                 .Include(u => u.Vendor)
+                 .FirstOrDefaultAsync(u => u.Id == User.FindFirstValue(ClaimTypes.NameIdentifier) );
+
+                if (user == null)
+                    return Unauthorized();
+
+
+
+                return Ok(new
+                {
+                    isVendor = user.HasShop,
+                    VendorDetails = user.HasShop ? new
+                    {
+                        user.Vendor.VendorId,
+                        user.Vendor.ShopName,
+                        user.Vendor.ShopAddress,
+                        user.Vendor.ShopDescription
+                    } : null
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error validating vendor status");
+                return StatusCode(500, "An error occurred while validating vendor status");
+            }
+        }
+
 
     }
 }

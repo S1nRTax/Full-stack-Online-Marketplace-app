@@ -250,8 +250,6 @@ namespace Server.Controllers
         }
 
 
-
-
         [HttpDelete]
         public async Task RevokeTokenAsync(User user)
         {

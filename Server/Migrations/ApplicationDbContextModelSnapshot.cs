@@ -223,6 +223,9 @@ namespace Server.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("HasShop")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -378,7 +381,7 @@ namespace Server.Migrations
                     b.HasOne("Server.Models.User", "User")
                         .WithOne("Customer")
                         .HasForeignKey("Server.Models.Customer", "Id")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
                 });
@@ -388,7 +391,7 @@ namespace Server.Migrations
                     b.HasOne("Server.Models.User", "User")
                         .WithOne("Vendor")
                         .HasForeignKey("Server.Models.Vendor", "Id")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
                 });

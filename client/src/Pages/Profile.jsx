@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import { Link } from 'react-router-dom'; 
 import { User, Mail, Camera, SmilePlus } from 'lucide-react';
 import { useVendor } from '../Context/TranstitionContext';
 
 const Profile = () => {
-    const { isLoggedIn, authUser } = useAuth();
-    const { isVendor, vendorData } = useVendor();
+    const { isLoggedIn, authUser} = useAuth();
+    const {vendorData ,isVendor , validateVendorStatus }= useVendor();
+    
     const [profileImage, setProfileImage] = useState(null);
 
+    
     // Handle profile image upload
     const handleImageUpload = (event) => {
         const file = event.target.files[0];
@@ -20,8 +22,11 @@ const Profile = () => {
             reader.readAsDataURL(file);
         }
     };
+    
 
-    console.log(isVendor);
+    useEffect(() => {
+        validateVendorStatus();
+    }, [validateVendorStatus]);
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -92,9 +97,9 @@ const Profile = () => {
                                 {/* Vendor Section */}
                                 {isVendor ? (
                                     <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                                        <h3 className="text-xl font-bold text-gray-800">{vendorData.shopName}</h3>
-                                        <p className="text-sm text-gray-600">{vendorData.shopDescription}</p>
-                                        <p className="text-sm text-gray-600 font-semibold">Address: {vendorData.shopAddress}</p>
+                                        <h3 className="text-xl font-bold text-gray-800">{vendorData.vendorDetails.shopName}</h3>
+                                        <p className="text-sm text-gray-600">{vendorData.vendorDetails.shopDescription}</p>
+                                        <p className="text-sm text-gray-600 font-semibold">Address: {vendorData.vendorDetails.shopAddress}</p>
                                     </div>
                                 ) : (
                                     <div className='flex items-center p-3 rounded-lg'>

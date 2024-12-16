@@ -12,8 +12,8 @@ using Server.Data;
 namespace Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241211205058_updatedDeleteBehaviorCustomerVendorToUser")]
-    partial class updatedDeleteBehaviorCustomerVendorToUser
+    [Migration("20241216182803_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -226,6 +226,9 @@ namespace Server.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("HasShop")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -381,7 +384,7 @@ namespace Server.Migrations
                     b.HasOne("Server.Models.User", "User")
                         .WithOne("Customer")
                         .HasForeignKey("Server.Models.Customer", "Id")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
                 });
@@ -391,7 +394,7 @@ namespace Server.Migrations
                     b.HasOne("Server.Models.User", "User")
                         .WithOne("Vendor")
                         .HasForeignKey("Server.Models.Vendor", "Id")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
                 });
