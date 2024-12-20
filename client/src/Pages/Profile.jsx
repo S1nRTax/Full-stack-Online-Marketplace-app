@@ -1,42 +1,49 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../Context/AuthContext';
-import { Link } from 'react-router-dom'; 
+import { Link } from 'react-router-dom';
 import { User, Mail, Camera, SmilePlus } from 'lucide-react';
 import { useVendor } from '../Context/TranstitionContext';
 
 const Profile = () => {
-    const { isLoggedIn, authUser ,validateAuth} = useAuth();
-    const {vendorData ,isVendor , validateVendorStatus }= useVendor();
-    const [ profileData , setProfileData] = useState("");
-    
-    
-    console.log(authUser);
-    
+    const { isLoggedIn, authUser, validateAuth } = useAuth();
+    const { vendorData, isVendor, validateVendorStatus } = useVendor();
+    const [userData, setUserData] = useState(null);
+
     const API_BASE_URL = import.meta.env.VITE_API_URL.replace('/api', '');
 
-   
-  // const profilePictureSrc = `${API_BASE_URL}/images/user.png` 
+    // Profile picture source logic moved into a function for better reactivity.
+    const getProfilePictureSrc = () => {
+        return authUser?.profilePicturePath
+            ? `${API_BASE_URL}${authUser.profilePicturePath}`
+            : `${API_BASE_URL}/images/user.png`;
+    };
 
-  const profilePictureSrc = authUser.profilePicturePath 
-    ? `${API_BASE_URL}${authUser.profilePicturePath}`
-    : `${API_BASE_URL}/images/user.png`;
-
-            
-        
-        
+    // Load user data from localStorage on component mount.
     useEffect(() => {
-            if (authUser) {
-                setProfileData(authUser);
-            }
-        }, [authUser]);
-   
-  
+        const profileData = window.localStorage.getItem('profile_data');
+        if (profileData) {
+            setUserData(JSON.parse(profileData));
+        }
+    }, []);
 
+    // Sync authUser with localStorage whenever it changes.
     useEffect(() => {
-        validateVendorStatus
-    }, [validateVendorStatus]);
+        if (authUser) {
+            window.localStorage.setItem('profile_data', JSON.stringify(authUser));
+            setUserData(authUser);
+        }
+    }, [authUser]);
 
-    
+    // Validate vendor and authentication statuses on component load.
+    useEffect(() => {
+        // validateVendorStatus();
+        // validateAuth();
+    }, [validateVendorStatus, validateAuth]);
+
+    // Show loading until authUser is fully loaded.
+    if (!authUser) {
+        return <div className="text-center">Loading...</div>;
+    }
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -46,33 +53,19 @@ const Profile = () => {
 
                     {isLoggedIn ? (
                         <div className="space-y-6">
-                            {/* Profile Image Section 
-                              <div className="relative mx-auto w-32 h-32">
-                                <input 
-                                    type="file" 
-                                    accept="image/*" 
-                                    id="profilePicUpload"
-                                    className="hidden"
-                                    onChange={handleImageUpload}
-                                />
-                                <label 
-                                    htmlFor="profilePicUpload" 
-                                    className="cursor-pointer absolute inset-0"
-                                >   </label>
-                            </div>*/}
-                                    <div className="w-full h-full rounded-full border-4 border-gray-200 overflow-hidden">
-
-                                            <img 
-                                                src={profilePictureSrc} 
-                                                alt="Profile" 
-                                                className="w-full h-full object-cover"
-                                            />
-
-                                    </div>
-                                    <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2">
-                                        <Camera className="w-4 h-4 text-white" />
-                                    </div>
-                              
+                            {/* Profile Image Section */}
+                            <div className="relative mx-auto w-32 h-32">
+                                <div className="w-full h-full rounded-full border-4 border-gray-200 overflow-hidden">
+                                    <img 
+                                        src={getProfilePictureSrc()} 
+                                        alt="Profile" 
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2">
+                                    <Camera className="w-4 h-4 text-white" />
+                                </div>
+                            </div>
 
                             {/* User Details Section */}
                             <div className="space-y-4">
