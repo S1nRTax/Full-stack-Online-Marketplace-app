@@ -5,45 +5,66 @@ import { User, Mail, Camera, SmilePlus } from 'lucide-react';
 import { useVendor } from '../Context/TranstitionContext';
 
 const Profile = () => {
-    const { isLoggedIn, authUser, validateAuth } = useAuth();
-    const { vendorData, isVendor, validateVendorStatus } = useVendor();
+    const { isLoggedIn, authUser, validateAuth  } = useAuth();
+    const { vendorData, validateVendorStatus } = useVendor();
     const [userData, setUserData] = useState(null);
+    const [shopData, setShopData] = useState(null);
 
     const API_BASE_URL = import.meta.env.VITE_API_URL.replace('/api', '');
 
-    // Profile picture source logic moved into a function for better reactivity.
+    // returns either default or custom profile picture.
     const getProfilePictureSrc = () => {
-        return authUser?.profilePicturePath
-            ? `${API_BASE_URL}${authUser.profilePicturePath}`
+        return userData?.profilePicture
+            ? `${API_BASE_URL}${userData.profilePicture}`
             : `${API_BASE_URL}/images/user.png`;
     };
+
+    const getVendorState = () => {
+        return shopData?.isVendor ? true : false;
+    }
 
     // Load user data from localStorage on component mount.
     useEffect(() => {
         const profileData = window.localStorage.getItem('profile_data');
+        const shopInfo = window.localStorage.getItem('shop_data');
+        
         if (profileData) {
             setUserData(JSON.parse(profileData));
         }
+
+        if(shopInfo){
+            setShopData(JSON.parse(shopInfo));
+        }
+        
     }, []);
 
-    // Sync authUser with localStorage whenever it changes.
+    // Sync authUser,vendorData with localStorage whenever it changes.
     useEffect(() => {
         if (authUser) {
             window.localStorage.setItem('profile_data', JSON.stringify(authUser));
             setUserData(authUser);
         }
-    }, [authUser]);
+        if(vendorData){
+            window.localStorage.setItem('shop_data', JSON.stringify(vendorData));
+            setShopData(vendorData);
+        }
+    }, [authUser , vendorData]);
+
+
+   
 
     // Validate vendor and authentication statuses on component load.
-    useEffect(() => {
-        // validateVendorStatus();
-        // validateAuth();
-    }, [validateVendorStatus, validateAuth]);
+     useEffect(() => {
+        validateVendorStatus();
+        validateAuth();
+        getVendorState();
+        }, []);
 
     // Show loading until authUser is fully loaded.
-    if (!authUser) {
+    if (!authUser ) {
         return <div className="text-center">Loading...</div>;
     }
+
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -93,12 +114,12 @@ const Profile = () => {
                                     </div>
                                 </div>
 
-                                {/* Vendor Section */}
-                                {isVendor ? (
+                            {/* Vendor Section */}
+                                { getVendorState() ? (
                                     <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                                        <h3 className="text-xl font-bold text-gray-800">{vendorData.vendorDetails.shopName}</h3>
-                                        <p className="text-sm text-gray-600">{vendorData.vendorDetails.shopDescription}</p>
-                                        <p className="text-sm text-gray-600 font-semibold">Address: {vendorData.vendorDetails.shopAddress}</p>
+                                        <h3 className="text-xl font-bold text-gray-800">{shopData.vendorDetails.shopName}</h3>
+                                        <p className="text-sm text-gray-600">{shopData.vendorDetails.shopDescription}</p>
+                                        <p className="text-sm text-gray-600 font-semibold">Address: {shopData.vendorDetails.shopAddress}</p>
                                     </div>
                                 ) : (
                                     <div className='flex items-center p-3 rounded-lg'>

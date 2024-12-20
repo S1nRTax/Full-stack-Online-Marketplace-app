@@ -8,26 +8,28 @@ const CreateShopForm = () => {
   const [shopName , setShopName] = useState("");
   const [shopAddress , setShopAddress] = useState("");
   const [shopDescription , setShopDescription] = useState("");
-  const { transitionToVendor, validateVendorStatus , isVendor ,setIsVendor } = useVendor();
+  const [shouldRedirect , setshouldRedirect] = useState(false);
+  const { transitionToVendor, validateVendorStatus } = useVendor();
 
 
         const handleBecomeVendor = async (e) => {
             e.preventDefault();
             const response = await transitionToVendor(shopName, shopAddress, shopDescription);
-             console.log(isVendor);
-             if(response.isVendor){
-                setIsVendor(true);
-             }
+            if(response){
+                setshouldRedirect(true);
+            }
         };
+
+        if(shouldRedirect){
+            return <Navigate to="/profile" replace />;
+        }
+
 
         useEffect(() => {
             validateVendorStatus();
         }, [validateVendorStatus]);
 
-        
-        if (isVendor) {
-            return <Navigate to="/profile" replace />;
-        }
+       
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

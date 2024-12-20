@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { useVendor } from './TranstitionContext';
 
 const AuthContext = React.createContext();
 
@@ -26,6 +27,7 @@ export function AuthProvider({ children }) {
             if (response.ok) {
                 await validateAuth(); 
                 setIsloading(true);
+                window.localStorage.setItem('profile_data', JSON.stringify(authUser));
                 setErrorMessage(null);
             } else {
                 const { message } = await response.json();
@@ -52,10 +54,11 @@ export function AuthProvider({ children }) {
             if (response.ok) {
                 const userData = await response.json();
                 setAuthUser(userData);
+                window.localStorage.setItem('profile_data', JSON.stringify(authUser));
                 setIsloading(true);
                 setIsLoggedIn(true);
             } else {
-                console.error('Validation failed');
+                window.localStorage.removeItem('profile_data');
                 logOut();
             }
             setIsloading(false);
@@ -77,6 +80,10 @@ export function AuthProvider({ children }) {
             if (response.ok) {
                 setAuthUser(null);
                 setIsLoggedIn(false);
+                console.log("deleting localstorage after logging out.");
+                window.localStorage.removeItem('shop_data');
+                window.localStorage.removeItem('profile_data');
+                
             } else {
                 console.error('Logout failed');
             }
@@ -126,6 +133,7 @@ export function AuthProvider({ children }) {
 
     const value = { 
         authUser,
+        validateAuth,
         setErrorMessage,
         isLoggedIn,
         isLoading,

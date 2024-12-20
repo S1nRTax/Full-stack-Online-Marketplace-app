@@ -1,4 +1,4 @@
-import React, { useState, useContext, useCallback } from 'react';
+import React, { useState, useContext } from 'react';
 import { useAuth } from './AuthContext';
 
 const TransitionContext = React.createContext();
@@ -13,8 +13,7 @@ export function useVendor() {
 
 export const TransitionProvider = ({ children }) => {
     const [vendorData, setVendorData] = useState(null);
-    const [isVendor, setIsVendor] = useState(false);
-    const { authUser, setErrorMessage } = useAuth(); 
+    const { authUser, setErrorMessage , logOut} = useAuth(); 
     const API_URL = "https://localhost:7262/api";
 
   
@@ -49,19 +48,9 @@ export const TransitionProvider = ({ children }) => {
                 body: JSON.stringify(vendorDetails),
             });
 
-            // Log response details for debugging
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Error Response:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    body: errorText,
-                });
-            }
-
             if (response.ok) {
                 await validateVendorStatus();
-                console.info('User has been transitioned successfully!');
+                window.localStorage.setItem('shop_data', JSON.stringify(vendorData));
                 return true;
             } else {
                 const errorData = await response.json().catch(() => ({
@@ -81,7 +70,7 @@ export const TransitionProvider = ({ children }) => {
         }
     };
 
-    const validateVendorStatus = useCallback(async () => {
+    const validateVendorStatus = async () => {
         try {
             const response = await fetch(`${API_URL}/transition/validateVendor`, {
                 method: 'GET', 
@@ -94,7 +83,6 @@ export const TransitionProvider = ({ children }) => {
             if (response.ok) {
                 const vendorData = await response.json();
                 setVendorData(vendorData);
-                setIsVendor(vendorData.isVendor); // Set state based on backend response
                 setErrorMessage('');
                 return true;
             } else {
@@ -102,7 +90,7 @@ export const TransitionProvider = ({ children }) => {
                     message: 'An unexpected error occurred',
                 }));
                 setErrorMessage(errorData.message || 'Failed to validate vendor status');
-                setIsVendor(false);
+                window.localStorage.removeItem('shop_data');
                 setVendorData(null);
                 return false;
             }
@@ -110,21 +98,17 @@ export const TransitionProvider = ({ children }) => {
             const errorMessage = error instanceof Error 
                 ? error.message 
                 : 'An unexpected network error occurred';
-
             setErrorMessage(errorMessage);
-            console.error('Vendor status validation error:', error);
-            setIsVendor(false);
             setVendorData(null);
             return false;
         }
-    }, [API_URL, setErrorMessage]);
+    };
 
     const value = {
         transitionToVendor,
         validateVendorStatus,
         vendorData,
-        isVendor,
-        setIsVendor,
+        setVendorData
     };
 
     return (
