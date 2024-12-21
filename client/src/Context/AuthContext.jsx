@@ -83,9 +83,11 @@ export function AuthProvider({ children }) {
                 console.log("deleting localstorage after logging out.");
                 window.localStorage.removeItem('shop_data');
                 window.localStorage.removeItem('profile_data');
+                return true;
                 
             } else {
                 console.error('Logout failed');
+                return false;
             }
         } catch (error) {
             console.error('Logout error:', error);

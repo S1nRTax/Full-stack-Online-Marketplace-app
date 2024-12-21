@@ -107,11 +107,7 @@ namespace Server
             // to serve static files : 
             app.UseStaticFiles();
 
-            app.UseStaticFiles(new StaticFileOptions
-            {
-                FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "images")),
-                RequestPath = "/Images"
-            });
+           
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

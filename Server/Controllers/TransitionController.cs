@@ -148,7 +148,11 @@ namespace Server.Controllers
                 if (user == null)
                     return Unauthorized();
 
-
+    
+                if (!user.HasShop)
+                {
+                    return Unauthorized();
+                }
 
                 return Ok(new
                 {

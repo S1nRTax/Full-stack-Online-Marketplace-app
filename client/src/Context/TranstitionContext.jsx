@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from './authContext';
 
 const TransitionContext = React.createContext();
 
@@ -13,7 +13,7 @@ export function useVendor() {
 
 export const TransitionProvider = ({ children }) => {
     const [vendorData, setVendorData] = useState(null);
-    const { authUser, setErrorMessage , logOut} = useAuth(); 
+    const { authUser, setErrorMessage } = useAuth(); 
     const API_URL = "https://localhost:7262/api";
 
   
@@ -35,8 +35,7 @@ export const TransitionProvider = ({ children }) => {
 
         const vendorDetails = { shopName, shopAddress, shopDescription };
         const userId = authUser.id;
-        console.log(vendorData);
-
+        
         try {
             const response = await fetch(`${API_URL}/transition/become-vendor/${userId}`, {
                 method: 'POST',

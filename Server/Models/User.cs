@@ -6,10 +6,10 @@ namespace Server.Models
 {
     public class User : IdentityUser
     {
-        public const string DefaultProfilePicturePath = "/images/user.png";
+        
         public string Name { get; set; } = string.Empty;
 
-        public string ProfilePicturePath { get; set; } = DefaultProfilePicturePath;
+        public string ProfilePicturePath { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

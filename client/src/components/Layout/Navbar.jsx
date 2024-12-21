@@ -1,9 +1,21 @@
-import React from 'react';
-import { Link } from 'react-router-dom'; 
+import React, { useState } from 'react';
+import { Link , Navigate, useNavigate} from 'react-router-dom'; 
 import { useAuth } from '../../Context/authContext';
+import { AwardIcon } from 'lucide-react';
 
 const Navbar = () => {
   const { isLoggedIn , logOut} = useAuth(); 
+  
+  const navigate = useNavigate();
+
+      const handleLogout = async (e) => {
+        e.preventDefault();
+
+        const response  = await logOut();
+        if(response){
+          navigate("/" , {replace: true});
+        }
+      }
 
   return (
     <nav className="bg-gray-800 text-white p-4">
@@ -16,7 +28,7 @@ const Navbar = () => {
           {isLoggedIn ? (
             <>
               <Link to="/profile" className="hover:text-gray-300">Profile</Link>
-              <button onClick={logOut}  className="text-red-500">
+              <button onClick={handleLogout}  className="text-red-500">
                 Logout
               </button>
             </>

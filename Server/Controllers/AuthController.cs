@@ -30,7 +30,7 @@ namespace Server.Controllers
             ApplicationDbContext context,
             ITokenService tokenService,
             ILogger<AuthController> logger)
-            
+
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -40,7 +40,7 @@ namespace Server.Controllers
             _logger = logger;
         }
 
-        const string DefaultProfilePicturePath = "/images/user.png";
+        const string DefaultProfilePicturePath = "/profile-pictures/default-profile-picture.png";
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
@@ -83,7 +83,7 @@ namespace Server.Controllers
                 };
                 // hashing password
                 var result = await _userManager.CreateAsync(user, model.Password);
-                
+
                 if (!result.Succeeded)
                 {
                     return BadRequest(new
@@ -106,7 +106,7 @@ namespace Server.Controllers
                 return Ok(new
                 {
                     Message = "Registration successful",
-                    User = new { user.Id, user.UserName , user.Name, user.Email , user.ProfilePicturePath}
+                    User = new { user.Id, user.UserName, user.Name, user.Email, user.ProfilePicturePath }
                 });
             }
             catch (Exception ex)
@@ -136,7 +136,7 @@ namespace Server.Controllers
                 {
                     HttpOnly = true,
                     Secure = true,
-                    SameSite = SameSiteMode.None, 
+                    SameSite = SameSiteMode.None,
                     Expires = DateTime.UtcNow.AddDays(7)
                 };
                 HttpContext.Response.Cookies.Append("access_token", accessToken, cookieOptions);
@@ -151,7 +151,7 @@ namespace Server.Controllers
 
                 _tokenService.SetAccessToken(refreshToken, user);
 
-                await _tokenService.SaveAccessTokenAsync(user , accessToken);
+                await _tokenService.SaveAccessTokenAsync(user, accessToken);
 
                 await _context.SaveChangesAsync();
                 // Return success response
@@ -272,8 +272,6 @@ namespace Server.Controllers
         }
 
 
-
-
         [Authorize] // Ensures the token is validated
         [HttpGet("validate")]
         public async Task<IActionResult> ValidateToken()
@@ -293,7 +291,7 @@ namespace Server.Controllers
             }
 
             return Ok(new
-            { 
+            {
                 id = user.Id,
                 user.Name,
                 username = user.UserName,
@@ -301,8 +299,6 @@ namespace Server.Controllers
                 profilePicture = user.ProfilePicturePath
             });
         }
-
-
 
 
         [HttpPost("logout")]
@@ -318,11 +314,53 @@ namespace Server.Controllers
             return Ok(new { Message = "Logged out successfully!" });
         }
 
+        [HttpPatch("update-profile-picture")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfilePicture([FromForm] IFormFile profilePicture, [FromServices] IProfilePictureService profilePictureService)
+        {
+            if (profilePicture == null || profilePicture.Length == 0)
+            {
+                return BadRequest(new { Message = "No file uploaded or file is empty." });
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(new { Message = "User not authorized. " });
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { Message = "User not found. " });
+            }
 
 
+            try
+            {
+                var newProfilePicturePath = await profilePictureService.SaveProfilePictureAsync(profilePicture);
 
+                // if the user already have a profile picture delete the old one.
+                if (!string.IsNullOrEmpty(user.ProfilePicturePath) && user.ProfilePicturePath != DefaultProfilePicturePath)
+                {
+                    profilePictureService.DeleteProfilePicture(user.ProfilePicturePath);
+                }
 
+                user.ProfilePicturePath = newProfilePicturePath;
+                var updateResult = await _userManager.UpdateAsync(user);
 
+                if (!updateResult.Succeeded)
+                {
+                    return StatusCode(500, new { Message = "Failed to update the profile picture in the database." });
+                }
 
+                return Ok(new { Message = "Profile picture updated successfully.", ProfilePicturepath = user.ProfilePicturePath });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating profile picture");
+                return StatusCode(500, new { Message = "An error occured while updating the profile picture.", Error = ex.Message });
+            }
+        }
     }
 }
