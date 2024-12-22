@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../Context/authContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Camera, SmilePlus } from 'lucide-react';
 import { useVendor } from '../Context/TranstitionContext';
 
@@ -9,7 +9,9 @@ const Profile = () => {
     const { vendorData, validateVendorStatus } = useVendor();
     const [userData, setUserData] = useState(null);
     const [shopData, setShopData] = useState(null);
-    const fileInputRef = useRef(null);  // To trigger the file input
+    const [refresh , setRefresh] = useState(false);
+    const navigate = useNavigate();
+    const fileInputRef = useRef(null);  
 
     const API_BASE_URL = import.meta.env.VITE_API_URL.replace('/api', '');
 
@@ -24,18 +26,27 @@ const Profile = () => {
                 credentials: 'include',
                 body: formData,
             });
-
-            if (!response.ok) {
+            
+            if(response.ok){
+                const data = await response.json();
+                console.log('Profile picture uploaded successfully:', data);
+                setRefresh(true);
+            }
+            else {
                 throw new Error('Upload failed');
             }
-            
-            const data = await response.json();
-            console.log('Profile picture uploaded successfully:', data);
-
         } catch (error) {
             console.error("Upload failed", error);
         }
     };
+
+    // if the user updates his profile pic it refreshs the page so he can see the new pic.
+    useEffect(() => {
+        if (refresh) {
+            setRefresh(false);
+            navigate(0); // Reload the page
+        }
+    }, [refresh]);
 
     const handleButtonClick = () => {
         fileInputRef.current.click(); // Trigger the hidden file input
@@ -48,9 +59,13 @@ const Profile = () => {
     };
 
     const getVendorState = () => {
-        return shopData?.isVendor ? true : false;
+        if(validateVendorStatus()){
+            return shopData?.isVendor;
+        }else{
+            return false;
+        }
     };
-
+    
     useEffect(() => {
         const profileData = window.localStorage.getItem('profile_data');
         const shopInfo = window.localStorage.getItem('shop_data');
@@ -64,6 +79,7 @@ const Profile = () => {
         }
     }, []);
 
+    // Validate vendor and authentication statuses on component load.
     useEffect(() => {
         if (authUser) {
             window.localStorage.setItem('profile_data', JSON.stringify(authUser));
@@ -75,12 +91,14 @@ const Profile = () => {
         }
     }, [authUser, vendorData]);
 
+    // Validate vendor and authentication statuses on component load.
     useEffect(() => {
         validateVendorStatus();
         validateAuth();
         getVendorState();
     }, []);
 
+    // Show loading until authUser is fully loaded.
     if (!authUser) {
         return <div className="text-center">Loading...</div>;
     }
