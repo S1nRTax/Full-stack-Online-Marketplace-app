@@ -30,7 +30,7 @@
 
             await file.CopyToAsync(stream);
 
-            return $"/{ProfilePictureFolder}/{fileName}"; // this returns the relative path.
+            return $"/{ProfilePictureFolder}/{fileName}"; 
         }
 
 

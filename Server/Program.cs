@@ -57,6 +57,9 @@ namespace Server
             .AddCookie(x =>
             {
                 x.Cookie.Name = "token";
+                x.Cookie.SameSite = SameSiteMode.None;
+                x.Cookie.HttpOnly = true;
+                x.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             })
             .AddJwtBearer(options =>
             {
