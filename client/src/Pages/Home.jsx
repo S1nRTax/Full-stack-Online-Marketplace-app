@@ -10,7 +10,7 @@ const Home = () => {
     <div className=''>
 
       {/** Main section grid-cols-[100px_3fr] sm:grid-cols-[300px_3fr] */}
-        <div className='grid grid-cols-5 gap-4 min-h-screen p-4'>
+        <div className='grid grid-cols-5 gap-4 min-h-screen '>
 
         {!shouldHideSideBar && <Sidebar />}
         <Posts onToggleSidebar={() => setShouldHideSideBar(!shouldHideSideBar)} 
