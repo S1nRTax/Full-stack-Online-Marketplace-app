@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../Context/AuthContext';
+import { useAuth } from '../Context/authContext';
 import { Navigate } from 'react-router-dom';
 
 const Login = () => {
