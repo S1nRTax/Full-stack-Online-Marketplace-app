@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Server.Models;
 
 namespace Server.Data
@@ -11,6 +12,7 @@ namespace Server.Data
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<AccessToken> AccessTokens { get; set; }
+        public DbSet<PostModel> Posts { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -36,6 +38,18 @@ namespace Server.Data
                 .HasForeignKey<Vendor>(v => v.Id)
                 .OnDelete(DeleteBehavior.Cascade)
                 .IsRequired(false);
+
+            // 1-to-many Relationship between Vendor and Posts
+            modelBuilder.Entity<PostModel>()
+                .HasOne(p => p.Vendor)
+                .WithMany(v => v.Posts)
+                .HasForeignKey(v => v.VendorId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+
+
+                
+                
 
             // Define unique constraint for RefreshToken's token
             modelBuilder.Entity<AccessToken>()

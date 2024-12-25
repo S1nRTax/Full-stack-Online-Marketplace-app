@@ -7,7 +7,7 @@ namespace Server.Models
 {
     public class Vendor
     {
-        public int VendorId { get; set; } // Unique identifier for the vendor
+        public string VendorId { get; set; } // Unique identifier for the vendor
         public string ShopId { get; set; } // Unique shop identifier
         public string ShopName { get; set; }
         public string ShopAddress { get; set; }
@@ -15,10 +15,15 @@ namespace Server.Models
         public string? ShopLogo { get; set; } // URL or path to the logo
         public int Popularity { get; set; } // Metric for popularity (e.g., number of sales)
 
+        public ICollection<PostModel> Posts { get; set; }
+
         // Foreign key to link with User
         [ForeignKey("User")]
         public string? Id { get; set; }
-        public User User { get; set; } // Navigation property
+
+        // Navigation Properties
+        public User User { get; set; } 
+
     }
 
 }
