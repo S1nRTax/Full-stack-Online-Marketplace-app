@@ -21,6 +21,5 @@ namespace Server.Models
 
         // Navigation Properties.
         public Vendor Vendor { get; set; }
-
     }
 }
