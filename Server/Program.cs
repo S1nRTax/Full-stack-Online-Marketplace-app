@@ -40,6 +40,7 @@ namespace Server
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddControllers();
             builder.Services.AddScoped<IProfilePictureService, ProfilePictureService>();
+            builder.Services.AddResponseCaching();
 
             // Configure the database connection
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -105,11 +106,15 @@ namespace Server
                 });
             });
 
+
+            
+
             var app = builder.Build();
 
             // to serve static files : 
             app.UseStaticFiles();
 
+            app.UseResponseCaching();
            
 
             // Configure the HTTP request pipeline.
