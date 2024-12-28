@@ -74,10 +74,10 @@ namespace Server.Services
                 var newVendor = new Vendor
                 {
                     Id = userId,
+                    ShopId = Guid.NewGuid().ToString(),
                     ShopName = vendorDetails.ShopName,
                     ShopAddress = vendorDetails.ShopAddress,
                     ShopDescription = vendorDetails.ShopDescription,
-                    ShopId = Guid.NewGuid().ToString(),
                     ShopLogo = shopLogo,
                     Popularity = 0
                 };

@@ -41,8 +41,8 @@ const Posts = ({onToggleSidebar , isSidebarHidden}) => {
                                     <h2 className="font-bold text-lg">Username</h2>
                                     <p className="text-sm text-gray-600">Created 1 hour ago</p>
                                     </div>
-                                    <div className="ml-auto">
-                                    <h2 className="font-bold text-lg">Title</h2>
+                                    <div className="ml-auto text-center">
+                                    <h2 className="font-bold text-lg">BWM M5 CS at sell best price no cap</h2>
                                     <p className="text-sm text-gray-600">1000+ sales</p>
                                     </div>
                                 </div>

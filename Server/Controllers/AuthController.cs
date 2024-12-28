@@ -283,6 +283,7 @@ namespace Server.Controllers
                 return Unauthorized("User ID not found in token.");
             }
 
+            Console.WriteLine(userId);
             var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)

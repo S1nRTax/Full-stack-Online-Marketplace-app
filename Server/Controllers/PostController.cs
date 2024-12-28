@@ -88,7 +88,7 @@ namespace Server.Controllers
                     PostCreatedAt = DateTime.UtcNow,
                     PostPriceTag = model.Price,
                     PostUpVotes = 0,
-                    VendorId = currentUser.Vendor.VendorId,
+                    ShopId = currentUser.Vendor.ShopId,
                     Vendor = currentUser.Vendor,
                 };
 
@@ -109,7 +109,7 @@ namespace Server.Controllers
                         Price = post.PostPriceTag,
                         UpVotes = post.PostUpVotes,
                         CreatedBy = currentUser.Vendor.ShopName ?? "Unknown",
-                        CreatedById = currentUser.Vendor.VendorId
+                        CreatedById = currentUser.Vendor.ShopId
                     };
 
                     _logger.LogInformation("Post created successfully. PostId: {PostId}", post.PostId);

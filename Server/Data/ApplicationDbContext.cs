@@ -43,7 +43,7 @@ namespace Server.Data
             modelBuilder.Entity<PostModel>()
                 .HasOne(p => p.Vendor)
                 .WithMany(v => v.Posts)
-                .HasForeignKey(v => v.VendorId)
+                .HasForeignKey(v => v.ShopId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .IsRequired(false);
 

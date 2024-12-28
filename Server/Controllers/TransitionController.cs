@@ -84,7 +84,7 @@ namespace Server.Controllers
                 {
                     Message = "User successfully transitioned to vendor.",
                     userInfo.HasShop,
-                    VendorId = userInfo.Vendor.VendorId,
+                    VendorId = userInfo.Vendor.ShopId,
                     ShopName = userInfo.Vendor.ShopName,
                     ShopAddress = userInfo.Vendor.ShopAddress,
                     ShopDescription = userInfo.Vendor.ShopDescription,
@@ -159,7 +159,7 @@ namespace Server.Controllers
                     isVendor = user.HasShop,
                     VendorDetails = user.HasShop ? new
                     {
-                        user.Vendor.VendorId,
+                        user.Vendor.ShopId,
                         user.Vendor.ShopName,
                         user.Vendor.ShopAddress,
                         user.Vendor.ShopDescription

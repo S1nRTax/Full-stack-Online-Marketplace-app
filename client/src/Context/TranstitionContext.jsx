@@ -1,69 +1,64 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useAuth } from './authContext';
 
 const TransitionContext = React.createContext();
 
 export function useVendor() {
     const context = useContext(TransitionContext);
-    if (context === undefined) {
+    if (!context) {
         throw new Error('useVendor must be used within a TransitionProvider');
     }
     return context;
 }
 
 export const TransitionProvider = ({ children }) => {
-    const [vendorData, setVendorData] = useState(null);
-    const { authUser, setErrorMessage } = useAuth(); 
+    const [vendorData, setVendorData] = useState(() => {
+        const savedData = window.localStorage.getItem('shop_data');
+        return savedData ? JSON.parse(savedData) : null;
+    });
+    const { authUser, setErrorMessage } = useAuth();
     const API_URL = "https://localhost:7262/api";
 
-  
+    useEffect(() => {
+        if (vendorData) {
+            window.localStorage.setItem('shop_data', JSON.stringify(vendorData));
+        } else {
+            window.localStorage.removeItem('shop_data');
+        }
+    }, [vendorData]);
 
     const transitionToVendor = async (shopName, shopAddress, shopDescription) => {
-        // Input validation
         if (!shopName || !shopAddress) {
             setErrorMessage('Shop name and address are required');
-            console.log("im here");
             return false;
         }
 
-        // Authentication check
         if (!authUser?.id) {
             setErrorMessage('User authentication failed');
-            console.log("im here");
             return false;
         }
 
         const vendorDetails = { shopName, shopAddress, shopDescription };
-        const userId = authUser.id;
-        
         try {
-            const response = await fetch(`${API_URL}/transition/become-vendor/${userId}`, {
+            const response = await fetch(`${API_URL}/transition/become-vendor/${authUser.id}`, {
                 method: 'POST',
-                mode: 'cors',
                 credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(vendorDetails),
             });
 
             if (response.ok) {
-                await validateVendorStatus();
-                window.localStorage.setItem('shop_data', JSON.stringify(vendorData));
+                const data = await response.json();
+                setVendorData(data);
+                setErrorMessage(null);
                 return true;
             } else {
-                const errorData = await response.json().catch(() => ({
-                    message: 'An unexpected error occurred',
-                }));
+                const errorData = await response.json();
                 setErrorMessage(errorData.message || 'Failed to transition to vendor');
                 return false;
             }
         } catch (error) {
-            const errorMessage = error instanceof Error 
-                ? error.message 
-                : 'An unexpected network error occurred';
-
-            setErrorMessage(errorMessage);
+            setErrorMessage('An unexpected network error occurred');
             console.error('Vendor transition error:', error);
             return false;
         }
@@ -72,33 +67,26 @@ export const TransitionProvider = ({ children }) => {
     const validateVendorStatus = async () => {
         try {
             const response = await fetch(`${API_URL}/transition/validateVendor`, {
-                method: 'GET', 
+                method: 'GET',
                 credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
             });
 
             if (response.ok) {
-                const vendorData = await response.json();
-                setVendorData(vendorData);
-                setErrorMessage('');
+                const data = await response.json();
+                setVendorData(data);
+                setErrorMessage(null);
                 return true;
             } else {
-                const errorData = await response.json().catch(() => ({
-                    message: 'An unexpected error occurred',
-                }));
+                const errorData = await response.json();
                 setErrorMessage(errorData.message || 'Failed to validate vendor status');
-                window.localStorage.removeItem('shop_data');
                 setVendorData(null);
                 return false;
             }
         } catch (error) {
-            const errorMessage = error instanceof Error 
-                ? error.message 
-                : 'An unexpected network error occurred';
-            setErrorMessage(errorMessage);
+            setErrorMessage('An unexpected network error occurred');
             setVendorData(null);
+            console.error('Validation error:', error);
             return false;
         }
     };
@@ -107,7 +95,6 @@ export const TransitionProvider = ({ children }) => {
         transitionToVendor,
         validateVendorStatus,
         vendorData,
-        setVendorData
     };
 
     return (

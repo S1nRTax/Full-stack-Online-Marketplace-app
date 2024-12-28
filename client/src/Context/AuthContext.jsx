@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
 
     // Function to handle login
     const logIn = async (email, password) => {
+        setIsloading(true); 
         try {
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
@@ -23,50 +24,49 @@ export function AuthProvider({ children }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
             });
-
+    
             if (response.ok) {
-                await validateAuth(); 
-                setIsloading(true);
-                window.localStorage.setItem('profile_data', JSON.stringify(authUser));
-                setErrorMessage(null);
+                await validateAuth();
+                setErrorMessage(null); 
             } else {
                 const { message } = await response.json();
                 setErrorMessage(message || "Login failed");
             }
-            setIsloading(false);
         } catch (error) {
             console.error('Login error:', error);
             setErrorMessage("Something went wrong. Please try again.");
+        } finally {
+            setIsloading(false); 
         }
     };
+    
 
     // Function to validate user
     const validateAuth = async () => {
+        setIsloading(true); 
         try {
             const response = await fetch(`${API_URL}/auth/validate`, {
                 method: 'GET',
-                credentials: 'include', 
-                headers: { 
-                    'Content-Type': 'application/json'
-                }
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
             });
     
             if (response.ok) {
                 const userData = await response.json();
                 setAuthUser(userData);
-                window.localStorage.setItem('profile_data', JSON.stringify(authUser));
-                setIsloading(true);
-                setIsLoggedIn(true);
+                window.localStorage.setItem('profile_data', JSON.stringify(userData)); // Store user data
+                setIsLoggedIn(true); 
             } else {
-                window.localStorage.removeItem('profile_data');
-                logOut();
+                logOut(); // Log out if validation fails
             }
-            setIsloading(false);
         } catch (error) {
             console.error('Validation error:', error);
-            logOut();
+            logOut(); 
+        } finally {
+            setIsloading(false); 
         }
     };
+    
 
     // Function to handle logout
     const logOut = async () => {

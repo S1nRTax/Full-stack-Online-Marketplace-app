@@ -7,7 +7,6 @@ namespace Server.Models
 {
     public class Vendor
     {
-        public string VendorId { get; set; } // Unique identifier for the vendor
         public string ShopId { get; set; } // Unique shop identifier
         public string ShopName { get; set; }
         public string ShopAddress { get; set; }

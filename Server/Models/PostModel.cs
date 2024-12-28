@@ -17,7 +17,7 @@ namespace Server.Models
 
         public DateTime PostCreatedAt { get; set; }
 
-        public string VendorId { get; set; }
+        public string ShopId { get; set; } // not vendorId
 
         // Navigation Properties.
         public Vendor Vendor { get; set; }

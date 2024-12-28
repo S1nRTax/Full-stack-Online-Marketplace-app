@@ -5,13 +5,12 @@ import { User, Mail, Camera, SmilePlus } from 'lucide-react';
 import { useVendor } from '../Context/TranstitionContext';
 
 const Profile = () => {
-    const { isLoggedIn, authUser, validateAuth  } = useAuth();
+    const { isLoggedIn, authUser } = useAuth();
     const { vendorData, validateVendorStatus } = useVendor();
-    const [userData, setUserData] = useState(null);
-    const [shopData, setShopData] = useState(null);
-    const [refresh , setRefresh] = useState(false);
+    const [loadingVendor, setLoadingVendor] = useState(true); // Tracks vendor data loading
+    const [refresh, setRefresh] = useState(false);
     const navigate = useNavigate();
-    const fileInputRef = useRef(null);  
+    const fileInputRef = useRef(null);
 
     const API_BASE_URL = import.meta.env.VITE_API_URL.replace('/api', '');
 
@@ -26,21 +25,19 @@ const Profile = () => {
                 credentials: 'include',
                 body: formData,
             });
-            
-            if(response.ok){
+
+            if (response.ok) {
                 const data = await response.json();
                 console.log('Profile picture uploaded successfully:', data);
                 setRefresh(true);
-            }
-            else {
+            } else {
                 throw new Error('Upload failed');
             }
         } catch (error) {
-            console.error("Upload failed", error);
+            console.error('Upload failed', error);
         }
     };
 
-    // if the user updates his profile pic it refreshs the page so he can see the new pic.
     useEffect(() => {
         if (refresh) {
             setRefresh(false);
@@ -53,54 +50,26 @@ const Profile = () => {
     };
 
     const getProfilePictureSrc = () => {
-        return userData?.profilePicture
-            ? `${API_BASE_URL}${userData.profilePicture}`
+        return authUser?.profilePicture
+            ? `${API_BASE_URL}${authUser.profilePicture}`
             : `${API_BASE_URL}/images/user.png`; // Default profile picture
     };
 
-    const getVendorState = () => {
-        if(validateVendorStatus()){
-            return shopData?.isVendor;
-        }else{
-            return false;
-        }
-    };
-    
     useEffect(() => {
-        const profileData = window.localStorage.getItem('profile_data');
-        const shopInfo = window.localStorage.getItem('shop_data');
-        
-        if (profileData) {
-            setUserData(JSON.parse(profileData));
-        }
-
-        if (shopInfo) {
-            setShopData(JSON.parse(shopInfo));
-        }
+        const fetchVendorStatus = async () => {
+            setLoadingVendor(true);
+            await validateVendorStatus();
+            setLoadingVendor(false);
+        };
+        fetchVendorStatus();
     }, []);
 
-    // Validate vendor and authentication statuses on component load.
-    useEffect(() => {
-        if (authUser) {
-            window.localStorage.setItem('profile_data', JSON.stringify(authUser));
-            setUserData(authUser);
-        }
-        if (vendorData) {
-            window.localStorage.setItem('shop_data', JSON.stringify(vendorData));
-            setShopData(vendorData);
-        }
-    }, [authUser, vendorData]);
-
-    // Validate vendor and authentication statuses on component load.
-    useEffect(() => {
-        validateVendorStatus();
-        validateAuth();
-        getVendorState();
-    }, []);
-
-    // Show loading until authUser is fully loaded.
     if (!authUser) {
         return <div className="text-center">Loading...</div>;
+    }
+
+    if (loadingVendor) {
+        return <div className="text-center">Loading vendor data...</div>;
     }
 
     return (
@@ -111,33 +80,27 @@ const Profile = () => {
 
                     {isLoggedIn ? (
                         <div className="space-y-6">
-                            {/* Profile Image Section */}
                             <div className="relative mx-auto w-32 h-32">
                                 <div className="w-full h-full rounded-full border-4 border-gray-200 overflow-hidden">
-                                    <img 
-                                        src={getProfilePictureSrc()} 
-                                        alt="Profile" 
+                                    <img
+                                        src={getProfilePictureSrc()}
+                                        alt="Profile"
                                         className="w-full h-full object-cover"
                                     />
                                 </div>
-                                {/* Camera icon button */}
-                                <div 
-                                    onClick={handleButtonClick} 
+                                <div
+                                    onClick={handleButtonClick}
                                     className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2 cursor-pointer"
                                 >
                                     <Camera className="w-4 h-4 text-white" />
                                 </div>
                             </div>
-
-                            {/* Hidden file input */}
-                            <input 
+                            <input
                                 ref={fileInputRef}
                                 type="file"
                                 className="hidden"
                                 onChange={uploadProfilePicture}
                             />
-
-                            {/* User Details Section */}
                             <div className="space-y-4">
                                 <div className="flex items-center bg-gray-50 p-3 rounded-lg">
                                     <SmilePlus className="w-6 h-6 text-blue-500 mr-3" />
@@ -146,7 +109,6 @@ const Profile = () => {
                                         <p className="font-semibold text-gray-800">{authUser.name}</p>
                                     </div>
                                 </div>
-
                                 <div className="flex items-center bg-gray-50 p-3 rounded-lg">
                                     <User className="w-6 h-6 text-blue-500 mr-3" />
                                     <div>
@@ -154,7 +116,6 @@ const Profile = () => {
                                         <p className="font-semibold text-gray-800">{authUser.username}</p>
                                     </div>
                                 </div>
-
                                 <div className="flex items-center bg-gray-50 p-3 rounded-lg">
                                     <Mail className="w-6 h-6 text-green-500 mr-3" />
                                     <div>
@@ -162,27 +123,32 @@ const Profile = () => {
                                         <p className="font-semibold text-gray-800">{authUser.email}</p>
                                     </div>
                                 </div>
-
-                                {/* Vendor Section */}
-                                {getVendorState() ? (
+                                {vendorData?.isVendor ? (
                                     <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                                        <h3 className="text-xl font-bold text-gray-800">{shopData.vendorDetails.shopName}</h3>
-                                        <p className="text-sm text-gray-600">{shopData.vendorDetails.shopDescription}</p>
-                                        <p className="text-sm text-gray-600 font-semibold">Address: {shopData.vendorDetails.shopAddress}</p>
+                                        <h3 className="text-xl font-bold text-gray-800">
+                                            {vendorData.vendorDetails.shopName}
+                                        </h3>
+                                        <p className="text-sm text-gray-600">
+                                            {vendorData.vendorDetails.shopDescription}
+                                        </p>
+                                        <p className="text-sm text-gray-600 font-semibold">
+                                            Address: {vendorData.vendorDetails.shopAddress}
+                                        </p>
                                     </div>
                                 ) : (
-                                    <div className='flex items-center p-3 rounded-lg'>
-                                        <Link to="/create-shop" className="text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 shadow-lg shadow-blue-500/50 dark:shadow-lg dark:shadow-blue-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"> 
-                                            Become a Vendor? 
-                                        </Link>                                  
+                                    <div className="flex items-center p-3 rounded-lg">
+                                        <Link
+                                            to="/create-shop"
+                                            className="text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 shadow-lg shadow-blue-500/50 dark:shadow-lg dark:shadow-blue-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                        >
+                                            Become a Vendor?
+                                        </Link>
                                     </div>
                                 )}
                             </div>
                         </div>
                     ) : (
-                        <div className="text-center text-gray-500">
-                            Please log in to view your profile
-                        </div>
+                        <div className="text-center text-gray-500">Please log in to view your profile</div>
                     )}
                 </div>
             </div>
