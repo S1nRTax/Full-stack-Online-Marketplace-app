@@ -9,7 +9,7 @@ const Home = () => {
   return (
     <div className=''>
 
-      {/** Main section grid-cols-[100px_3fr] sm:grid-cols-[300px_3fr] */}
+      {/** Main section */}
         <div className='grid grid-cols-5 gap-4 min-h-screen '>
 
         {!shouldHideSideBar && <Sidebar />}
