@@ -18,15 +18,18 @@ namespace Server.Controllers
         private readonly UserManager<User> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly ILogger<PostController> _logger;
+        private readonly IProfilePictureService _profilePictureService;
 
         public PostController(
             UserManager<User> userManager,
             ApplicationDbContext context,
-            ILogger<PostController> logger)
+            ILogger<PostController> logger,
+            IProfilePictureService profilePictureService)
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _profilePictureService = profilePictureService ?? throw new ArgumentNullException(nameof(_profilePictureService));
         }
 
         [HttpPost("create-post")]
@@ -35,7 +38,7 @@ namespace Server.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> CreatePost([FromBody] CreatePostDto model )
+        public async Task<IActionResult> CreatePost([FromForm] CreatePostDto model )
         {
             try
             {
@@ -55,6 +58,7 @@ namespace Server.Controllers
                     ModelState.AddModelError("Price", "Price cannot be less than 0");
                     return BadRequest(ModelState);
                 }
+
 
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var currentUser = await _userManager.Users
@@ -79,12 +83,13 @@ namespace Server.Controllers
                     });
                 }
 
+               string picturePath = await _profilePictureService.SavePostPictureAsync(model.Picture);
 
                 var post = new PostModel
                 {
                     PostId = Guid.NewGuid().ToString(),
                     PostTitle = model.Title.Trim(),
-                    PostImagePath = model.picture?.Trim(),
+                    PostImagePath = picturePath,
                     PostCreatedAt = DateTime.UtcNow,
                     PostPriceTag = model.Price,
                     PostUpVotes = 0,

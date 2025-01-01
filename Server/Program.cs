@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -41,6 +42,17 @@ namespace Server
             builder.Services.AddControllers();
             builder.Services.AddScoped<IProfilePictureService, ProfilePictureService>();
             builder.Services.AddResponseCaching();
+
+
+            builder.Services.Configure<IISServerOptions>(options =>
+            {
+                options.MaxRequestBodySize = 10 * 1024 * 1024; // 10MB
+            });
+
+            builder.Services.Configure<FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = 10 * 1024 * 1024; // 10MB
+            });
 
             // Configure the database connection
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
